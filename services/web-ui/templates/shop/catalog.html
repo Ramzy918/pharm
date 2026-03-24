@@ -2,43 +2,30 @@
 
 {% block title %}Catalogue{% endblock %}
 
-{% block extra_css %}
-<style>
-  .product-buy-form .price-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-  }
-  .qty-label {
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-    font-size: 0.8rem;
-  }
-  .product-qty {
-    width: 60px;
-    padding: 0.3rem;
-    text-align: center;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-  }
-  .line-total {
-    font-size: 0.85rem;
-    font-weight: 500;
-    white-space: nowrap;
-  }
-</style>
-{% endblock %}
-
 {% block content %}
-<h1 class="page-title">Nos produits</h1>
-<p class="muted">Tous nos médicaments et produits de santé – Prix en dinars algériens</p>
+<h1 class="page-title">{{ T.catalog|default:'Nos produits' }}</h1>
+<p class="muted">{{ T.catalog_info|default:'Données issues de l’API /api/products/ (authentification JWT).' }}</p>
+<form method="get" class="catalog-filter-form" style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem;">
+  <input type="text" name="q" value="{{ request.GET.q|default:'' }}" placeholder="{{ T.search_placeholder|default:'Recherche produit...' }}" style="flex: 1 1 220px; padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+  <input type="number" name="min_stock" value="{{ request.GET.min_stock|default:'' }}" min="0" placeholder="{{ T.min_stock|default:'Stock min' }}" style="width: 120px; padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+  <select name="category" style="width: 160px; padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px;">
+    <option value="">{{ T.all_categories|default:'Toutes catégories' }}</option>
+    {% for cat in categories %}
+      <option value="{{ cat.id }}" {% if request.GET.category|stringformat:'s' == cat.id|stringformat:'s' %}selected{% endif %}>{{ cat.name }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn-primary small">{{ T.filter|default:'Filtrer' }}</button>
+</form>
 <div class="grid-products">
   {% for p in results %}
     <article class="card product-card">
-      <!-- badge stock supprimé -->
+      {% if p.stock == 0 %}
+        <div class="badge badge-out">Rupture de stock</div>
+      {% elif p.stock <= 10 %}
+        <div class="badge badge-low">Stock faible · {{ p.stock }}</div>
+      {% else %}
+        <div class="badge badge-ok">En stock · {{ p.stock }}</div>
+      {% endif %}
       <div class="product-img-placeholder">
         {% if p.image %}
           <img src="{{ p.image.url }}" alt="{{ p.name }}" style="max-height: 100%; max-width: 100%; object-fit: cover;">
@@ -49,40 +36,22 @@
       <h2>{{ p.name }}</h2>
       <p class="category">{{ p.category_name }}</p>
       <p class="summary">{{ p.summary }}</p>
-      <form method="post" action="{% url 'cart_add' %}" class="product-buy-form">
-        {% csrf_token %}
-        <input type="hidden" name="product_id" value="{{ p.id }}">
-        <div class="price-row">
-          <span class="price">{{ p.price_dzd|floatformat:0 }} DA</span>
-          <label class="qty-label">Qté
-            <input class="product-qty" type="number" name="quantity" min="1" value="1" data-price="{{ p.price_dzd }}">
-          </label>
-          <span class="line-total">Total: {{ p.price_dzd|floatformat:0 }} DA</span>
-          <button type="submit" class="btn-primary small"><i class="fas fa-shopping-cart"></i> Ajouter</button>
-        </div>
-      </form>
+      {% if p.expired %}
+        <div class="badge badge-expired">Produit périmé</div>
+      {% elif p.expiring_soon %}
+        <div class="badge badge-alert">À périmer dans <strong>30 jours</strong></div>
+      {% endif %}
+      <div class="price-row">
+        <span class="price">{{ p.price }}&nbsp;DA</span>
+        {% if p.stock > 0 and not p.expired %}
+          <a class="btn-primary small" href="{% url 'cart_add' p.id %}">Ajouter</a>
+        {% else %}
+          <button class="btn-primary small disabled" disabled>Indisponible</button>
+        {% endif %}
+      </div>
     </article>
   {% empty %}
     <p>Aucun produit à afficher.</p>
   {% endfor %}
 </div>
-
-<script>
-  document.querySelectorAll('.product-buy-form').forEach(form => {
-    const qtyInput = form.querySelector('.product-qty');
-    const totalSpan = form.querySelector('.line-total');
-    if (qtyInput && totalSpan) {
-      const update = () => {
-        const price = parseFloat(qtyInput.getAttribute('data-price')) || 0;
-        let qty = parseInt(qtyInput.value, 10);
-        if (isNaN(qty) || qty < 1) qty = 1;
-        qtyInput.value = qty;
-        const total = price * qty;
-        totalSpan.textContent = `Total: ${total.toFixed(0)} DA`;
-      };
-      qtyInput.addEventListener('input', update);
-      update();
-    }
-  });
-</script>
 {% endblock %}

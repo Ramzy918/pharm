@@ -11,8 +11,10 @@
     <p style="color: var(--muted); max-width: 580px; margin: 0 auto;">Fournisseur de confiance pour les professionnels de santé et les particuliers</p>
   </div>
   <div class="search-wrapper">
-    <input type="text" placeholder="Recherche un produit, une marque ... 🔍" aria-label="Rechercher">
-    <button><i class="fas fa-search"></i> Rechercher</button>
+    <form method="get" style="display: flex; gap: 0.5rem; max-width: 500px; margin: 0 auto;">
+      <input type="text" name="q" value="{{ search_query }}" placeholder="Recherche un produit, une marque ... 🔍" aria-label="Rechercher" style="flex: 1; padding: 0.75rem 1rem; border: 2px solid #e1e5e9; border-radius: 25px; font-size: 1rem;">
+      <button type="submit" style="padding: 0.75rem 1.5rem; background: var(--green); color: white; border: none; border-radius: 25px; cursor: pointer;"><i class="fas fa-search"></i> Rechercher</button>
+    </form>
   </div>
   <div class="hero-cta" style="justify-content: center; margin-top: 1.2rem; gap: 1rem;">
     {% if request.session.access %}
@@ -64,23 +66,6 @@
   </div>
 </div>
 
-<!-- Panel horizontal rapide -->
-<div>
-  <div class="section-title">
-    <span>Pour vous : catégories rapides</span>
-    <a href="{% url 'catalog' %}">Voir le catalogue complet <i class="fas fa-chevron-right"></i></a>
-  </div>
-  <div class="horiz-scroll">
-    <div class="horiz-card"><img src="https://via.placeholder.com/120x80?text=Bébé" alt="Bébé"><strong>Bébé</strong></div>
-    <div class="horiz-card"><img src="https://via.placeholder.com/120x80?text=Médicaments" alt="Médicaments"><strong>Médicaments</strong></div>
-    <div class="horiz-card"><img src="https://via.placeholder.com/120x80?text=Rhume" alt="Rhume"><strong>Rhume / Grippe</strong></div>
-    <div class="horiz-card"><img src="https://via.placeholder.com/120x80?text=Allergie" alt="Allergie"><strong>Allergie</strong></div>
-    <div class="horiz-card"><img src="https://via.placeholder.com/120x80?text=Toux" alt="Toux"><strong>Toux / Gorge</strong></div>
-    <div class="horiz-card"><img src="https://via.placeholder.com/120x80?text=Digestion" alt="Digestion"><strong>Digestion</strong></div>
-    <div class="horiz-card"><img src="https://via.placeholder.com/120x80?text=Vitamines" alt="Vitamines"><strong>Vitamines</strong></div>
-  </div>
-</div>
-
 <!-- Produits phares -->
 <div>
   <div class="section-title">
@@ -100,27 +85,41 @@
         <h2>{{ product.name }}</h2>
         <p class="category">{{ product.category_name }}</p>
         <div><span class="badge badge-stock"><i class="fas fa-check-circle"></i> En stock</span></div>
-        <form method="post" action="{% url 'cart_add' %}" class="product-buy-form">
-          {% csrf_token %}
-          <input type="hidden" name="product_id" value="{{ product.id }}">
-          <div class="price-row">
-            <span class="price">{{ product.price_dzd|floatformat:0 }} DA</span>
-            <label class="qty-label">Qté
-              <input class="product-qty" type="number" name="quantity" min="1" value="1" data-price="{{ product.price_dzd }}">
-            </label>
-            <span class="line-total">Total: {{ product.price_dzd|floatformat:0 }} DA</span>
-            <button type="submit" class="btn-outline-teal add-btn"><i class="fas fa-shopping-cart"></i> Ajouter</button>
-          </div>
-        </form>
+        <div class="price-row">
+          <span class="price">{{ product.price }}&nbsp;DA</span>
+          <a href="{% url 'cart_add' product.id %}" class="btn-outline-teal"><i class="fas fa-shopping-cart"></i> Ajouter</a>
+        </div>
         <div class="muted" style="font-size: 0.7rem;">{{ product.unit_info|default:"" }}</div>
       </div>
     {% empty %}
-      <p>Aucun produit phare pour le moment.</p>
+      <!-- Exemples statiques si aucune donnée -->
+      <div class="card product-card">
+        <div class="product-img-placeholder"><i class="fas fa-frog fa-3x"></i></div>
+        <h2>Seringue Grenouille</h2>
+        <p class="category">Bébé / Seringue nasale</p>
+        <div><span class="badge badge-stock"><i class="fas fa-check-circle"></i> En stock</span></div>
+        <div class="price-row">
+          <span class="price">1,45 €</span>
+          <a href="#" class="btn-outline-teal"><i class="fas fa-shopping-cart"></i> Ajouter</a>
+        </div>
+        <div class="muted" style="font-size: 0.7rem;">Boîte de 2 seringues</div>
+      </div>
+      <div class="card product-card">
+        <div class="product-img-placeholder"><i class="fas fa-wine-bottle fa-3x"></i></div>
+        <h2>Pack découverte</h2>
+        <p class="category">Consommables / Bouteilles</p>
+        <div><span class="badge badge-stock"><i class="fas fa-check-circle"></i> En stock</span></div>
+        <div class="price-row">
+          <span class="price">109,50 €</span>
+          <a href="#" class="btn-outline-teal"><i class="fas fa-shopping-cart"></i> Ajouter</a>
+        </div>
+        <div class="muted" style="font-size: 0.7rem;">24 bouteilles 500 ml</div>
+      </div>
     {% endfor %}
   </div>
 </div>
 
-<!-- Gamme tests (prix en DA) -->
+<!-- Gamme tests -->
 <div style="background: linear-gradient(120deg, var(--green-light) 0%, #fff 100%); border-radius: 28px; margin: 2.5rem 0; padding: 1.5rem 2rem;">
   <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;">
     <div>
@@ -129,22 +128,45 @@
     </div>
     <a href="#" class="btn-primary">Voir tous nos tests <i class="fas fa-arrow-right"></i></a>
   </div>
+
   <div class="grid-products" style="margin-top: 1.5rem;">
+    
+    <!-- Produit 1 -->
     <div class="card" style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
       <i class="fas fa-vial" style="font-size: 2rem; color: var(--green);"></i>
-      <div><strong>Autotests COVID-19</strong><br><span class="muted">Résultats 15 min</span></div>
-      <div style="margin-left: auto;"><span class="price">1176 DA</span></div>
+      <div>
+        <strong>Autotests COVID-19</strong><br>
+        <span class="muted">Résultats 15 min</span>
+      </div>
+      <div style="margin-left: auto;">
+        <span class="price">1200 DA</span>
+      </div>
     </div>
+
+    <!-- Produit 2 -->
     <div class="card" style="display: flex; align-items: center; gap: 1rem;">
       <i class="fas fa-stethoscope" style="font-size: 2rem; color: var(--green);"></i>
-      <div><strong>Test Grippe A/B</strong><br><span class="muted">Écouvillon nasal</span></div>
-      <div style="margin-left: auto;"><span class="price">2136 DA</span></div>
+      <div>
+        <strong>Test Grippe A/B</strong><br>
+        <span class="muted">Écouvillon nasal</span>
+      </div>
+      <div style="margin-left: auto;">
+        <span class="price">1350 DA</span>
+      </div>
     </div>
+
+    <!-- Produit 3 -->
     <div class="card" style="display: flex; align-items: center; gap: 1rem;">
       <i class="fas fa-droplet" style="font-size: 2rem; color: var(--green);"></i>
-      <div><strong>Strep A (angine)</strong><br><span class="muted">Usage pro / 25 tests</span></div>
-      <div style="margin-left: auto;"><span class="price">7800 DA</span></div>
+      <div>
+        <strong>Strep A (angine)</strong><br>
+        <span class="muted">Usage pro / 25 tests</span>
+      </div>
+      <div style="margin-left: auto;">
+        <span class="price">4900 DA</span>
+      </div>
     </div>
+
   </div>
 </div>
 
@@ -171,24 +193,4 @@
 <div style="background: white; border-radius: 20px; border: 1px solid var(--border); padding: 0.8rem 1.2rem; text-align: center; margin: 1.5rem 0;">
   <span class="muted"><i class="fas fa-check-circle" style="color: var(--green);"></i> Plus de 1200 professionnels de santé nous font confiance • Stock disponible • Expédition immédiate</span>
 </div>
-
-<script>
-  // Mise à jour dynamique du total pour les produits phares
-  document.querySelectorAll('.product-buy-form').forEach(form => {
-    const qtyInput = form.querySelector('.product-qty');
-    const totalSpan = form.querySelector('.line-total');
-    if (qtyInput && totalSpan) {
-      const update = () => {
-        const price = parseFloat(qtyInput.getAttribute('data-price')) || 0;
-        let qty = parseInt(qtyInput.value, 10);
-        if (isNaN(qty) || qty < 1) qty = 1;
-        qtyInput.value = qty;
-        const total = price * qty;
-        totalSpan.textContent = `Total: ${total.toFixed(0)} DA`;
-      };
-      qtyInput.addEventListener('input', update);
-      update();
-    }
-  });
-</script>
 {% endblock %}

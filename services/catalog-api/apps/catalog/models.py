@@ -25,6 +25,7 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))])
     stock = models.PositiveIntegerField(default=0)
     sku = models.CharField(max_length=64, unique=True)
+    expiration_date = models.DateField(null=True, blank=True)
 
     class Meta:
         ordering = ["name"]

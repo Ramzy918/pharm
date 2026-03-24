@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion des Commandes{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto; padding: 2rem;">
+  <h1 style="font-size: 2rem; margin-bottom: 2rem;">📋 Gestion des Commandes</h1>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div style="padding: 1rem; border-radius: 6px; margin-bottom: 1rem; background: {% if 'success' in message.tags %}#d4edda{% else %}#f8d7da{% endif %}; color: #333; border-left: 4px solid {% if 'success' in message.tags %}#28a745{% else %}#dc3545{% endif %};">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if orders %}
+    <div style="overflow-x: auto; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+            <th style="padding: 1rem; text-align: left; font-weight: 600;">ID Commande</th>
+            <th style="padding: 1rem; text-align: left; font-weight: 600;">Client ID</th>
+            <th style="padding: 1rem; text-align: left; font-weight: 600;">Montant Total</th>
+            <th style="padding: 1rem; text-align: left; font-weight: 600;">Remise</th>
+            <th style="padding: 1rem; text-align: left; font-weight: 600;">Statut</th>
+            <th style="padding: 1rem; text-align: left; font-weight: 600;">Date</th>
+            <th style="padding: 1rem; text-align: center; font-weight: 600;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in orders %}
+            <tr style="border-bottom: 1px solid #dee2e6;">
+              <td style="padding: 1rem; font-weight: 600;">#{{ order.id }}</td>
+              <td style="padding: 1rem;">{{ order.auth_user_id }}</td>
+              <td style="padding: 1rem;">
+                <strong>{{ order.total|floatformat:2 }}DA</strong>
+              </td>
+              <td style="padding: 1rem;">
+                {% if order.discount_percent %}
+                  <span style="background: #fff3cd; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem;">
+                    -{{ order.discount_percent }}%
+                  </span>
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+              <td style="padding: 1rem;">
+                <span style="display: inline-block; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; background: 
+                  {% if order.status == 'PENDING' %}#fff3cd; color: #856404;
+                  {% elif order.status == 'CONFIRMED' %}#cce5ff; color: #004085;
+                  {% elif order.status == 'SHIPPED' %}#d1ecf1; color: #0c5460;
+                  {% elif order.status == 'CANCELLED' %}#f8d7da; color: #721c24;
+                  {% else %}#e2e3e5; color: #383d41;
+                  {% endif %}">
+                  {{ order.status }}
+                </span>
+              </td>
+              <td style="padding: 1rem; font-size: 0.9rem;">{{ order.created_at|date:"d/m/Y H:i" }}</td>
+              <td style="padding: 1rem; text-align: center;">
+                <a href="{% url 'admin_order_detail' order.id %}" style="color: #667eea; text-decoration: none; font-weight: 600;">
+                  👁️ Voir
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div style="text-align: center; padding: 3rem; background: #f8f9fa; border-radius: 12px;">
+      <p style="font-size: 1.1rem; color: #666;">Aucune commande trouvée.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

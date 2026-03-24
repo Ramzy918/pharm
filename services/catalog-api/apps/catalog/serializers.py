@@ -29,6 +29,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "price",
             "stock",
             "sku",
+            "expiration_date",
         )
 
 

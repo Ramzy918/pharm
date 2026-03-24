@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Commande #{{ order.id }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto; padding: 2rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h1 style="font-size: 2rem; margin: 0;">📋 Commande #{{ order.id }}</h1>
+    <a href="{% url 'admin_orders_list' %}" style="color: #667eea; text-decoration: none; font-weight: 600;">← Retour</a>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div style="padding: 1rem; border-radius: 6px; margin-bottom: 1rem; background: {% if 'success' in message.tags %}#d4edda{% else %}#f8d7da{% endif %}; color: #333; border-left: 4px solid {% if 'success' in message.tags %}#28a745{% else %}#dc3545{% endif %};">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+    <!-- Infos Commande -->
+    <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+      <h2 style="font-size: 1.2rem; margin-top: 0; border-bottom: 2px solid #667eea; padding-bottom: 0.5rem;">Informations</h2>
+      <p><strong>Client ID:</strong> {{ order.auth_user_id }}</p>
+      <p><strong>Date:</strong> {{ order.created_at|date:"d/m/Y à H:i" }}</p>
+      <p><strong>Sous-total:</strong> {{ order.subtotal|floatformat:2 }}DA</p>
+      {% if order.discount_percent %}
+        <p><strong>Remise:</strong> -{{ order.discount_percent }}%</p>
+      {% endif %}
+      <p style="font-size: 1.2rem; color: #667eea;"><strong>TOTAL: {{ order.total|floatformat:2 }}€</strong></p>
+    </div>
+
+    <!-- Modification Statut -->
+    <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+      <h2 style="font-size: 1.2rem; margin-top: 0; border-bottom: 2px solid #f093fb; padding-bottom: 0.5rem;">Statut</h2>
+      <p style="margin-bottom: 1rem;">
+        <span style="display: inline-block; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; background: 
+          {% if order.status == 'PENDING' %}#fff3cd; color: #856404;
+          {% elif order.status == 'CONFIRMED' %}#cce5ff; color: #004085;
+          {% elif order.status == 'SHIPPED' %}#d1ecf1; color: #0c5460;
+          {% elif order.status == 'CANCELLED' %}#f8d7da; color: #721c24;
+          {% endif %}">
+          {{ order.status }}
+        </span>
+      </p>
+      
+      <form method="post" style="display: flex; flex-direction: column; gap: 0.8rem;">
+        {% csrf_token %}
+        <select name="status" style="padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
+          <option value="{{ order.status }}" selected>-- Sélectionner un nouveau statut --</option>
+          {% if order.status != 'PENDING' %}<option value="PENDING">⏳ En attente</option>{% endif %}
+          {% if order.status != 'CONFIRMED' %}<option value="CONFIRMED">✅ Confirmée</option>{% endif %}
+          {% if order.status != 'SHIPPED' %}<option value="SHIPPED">🚚 Expédiée</option>{% endif %}
+          {% if order.status != 'CANCELLED' %}<option value="CANCELLED">❌ Annulée</option>{% endif %}
+        </select>
+        <button type="submit" style="padding: 0.8rem 1.5rem; background: #f093fb; color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 1rem; cursor: pointer;">
+          💾 Mettre à jour
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Articles de la Commande -->
+  <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+    <h2 style="font-size: 1.2rem; margin-top: 0; border-bottom: 2px solid #4facfe; padding-bottom: 0.5rem;">Articles de la Commande</h2>
+    
+    {% if order.lines %}
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: #f8f9fa; border-bottom: 1px solid #dee2e6;">
+              <th style="padding: 0.8rem; text-align: left;">Produit</th>
+              <th style="padding: 0.8rem; text-align: center;">Quantité</th>
+              <th style="padding: 0.8rem; text-align: right;">Prix Unit.</th>
+              <th style="padding: 0.8rem; text-align: right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for line in order.lines %}
+              <tr style="border-bottom: 1px solid #dee2e6;">
+                <td style="padding: 0.8rem;">
+                  <strong>{{ line.product_name }}</strong>
+                  <br>
+                  <span style="font-size: 0.85rem; color: #666;">ID: {{ line.product }}</span>
+                </td>
+                <td style="padding: 0.8rem; text-align: center;">{{ line.quantity }}</td>
+                <td style="padding: 0.8rem; text-align: right;">{{ line.unit_price|floatformat:2 }}DA</td>
+                <td style="padding: 0.8rem; text-align: right; font-weight: 600;">
+                  {{ line.line_total|floatformat:2 }}DA
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p style="color: #666; text-align: center; padding: 1rem;">Aucun article dans cette commande.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

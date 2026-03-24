@@ -3,26 +3,26 @@
 {% block title %}Mes commandes{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Mes commandes</h1>
+<h1 class="page-title">{{ T.orders|default:'Mes commandes' }}</h1>
 {% if results %}
   <div class="order-list">
     {% for o in results %}
       <article class="card order-card">
         <header>
           <span class="order-id">#{{ o.id }}</span>
-          <span class="status">{{ o.status }}</span>
+          <span class="status status-{{ o.status|lower }}">{{ o.status }}</span>
           <time>{{ o.created_at }}</time>
         </header>
         <p class="totals">
-          Sous-total {{ o.subtotal|default:0|floatformat:0 }}&nbsp;DA
+          Sous-total {{ o.subtotal }}&nbsp;DA
           {% if o.discount_percent %}
             · Remise {{ o.discount_percent }}&nbsp;%
           {% endif %}
-          · <strong>Total {{ o.total_dzd|floatformat:0 }}&nbsp;DA</strong>
+          · <strong>Total {{ o.total }}&nbsp;DA</strong>
         </p>
         <ul class="lines">
           {% for line in o.lines %}
-            <li>{{ line.quantity }}× {{ line.product_name }} @ {{ line.unit_price_dzd|floatformat:0 }}&nbsp;DA</li>
+            <li>{{ line.quantity }}× {{ line.product_name }} @ {{ line.unit_price }}&nbsp;DA</li>
           {% endfor %}
         </ul>
       </article>

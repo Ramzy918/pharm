@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}{% if product %}Modifier le Produit{% else %}Ajouter un Produit{% endif %}{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 0 auto; padding: 2rem;">
+  <h1 style="font-size: 2rem; margin-bottom: 2rem;">
+    {% if product %}✏️ Modifier le Produit{% else %}➕ Ajouter un Produit{% endif %}
+  </h1>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div style="padding: 1rem; border-radius: 6px; margin-bottom: 1rem; background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545;">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="post" style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+    {% csrf_token %}
+    
+    <div style="margin-bottom: 1.5rem;">
+      <label for="name" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Nom du produit *</label>
+      <input 
+        type="text" 
+        name="name" 
+        id="name" 
+        required 
+        value="{{ product.name|default:'' }}"
+        style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;"
+        placeholder="Ex: Paracétamol 500mg"
+      >
+    </div>
+    
+    <div style="margin-bottom: 1.5rem;">
+      <label for="slug" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Slug (URL) *</label>
+      <input 
+        type="text" 
+        name="slug" 
+        id="slug" 
+        required 
+        value="{{ product.slug|default:'' }}"
+        style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;"
+        placeholder="ex-paracetamol-500mg"
+      >
+      <span style="font-size: 0.85rem; color: #666;">Utilisé dans l'URL du produit</span>
+    </div>
+    
+    <div style="margin-bottom: 1.5rem;">
+      <label for="sku" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">SKU (Code) *</label>
+      <input 
+        type="text" 
+        name="sku" 
+        id="sku" 
+        required 
+        value="{{ product.sku|default:'' }}"
+        style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;"
+        placeholder="PARA-500-001"
+      >
+      <span style="font-size: 0.85rem; color: #666;">Code unique pour l'inventaire</span>
+    </div>
+    
+    <div style="margin-bottom: 1.5rem;">
+      <label for="summary" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Description courte</label>
+      <textarea 
+        name="summary" 
+        id="summary" 
+        style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box; resize: vertical; min-height: 80px;"
+        placeholder="Description brève du produit..."
+      >{{ product.summary|default:'' }}</textarea>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+      <div>
+        <label for="price" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Prix (DA) *</label>
+        <input 
+          type="number" 
+          name="price" 
+          id="price" 
+          required 
+          step="0.01" 
+          min="0"
+          value="{{ product.price|default:'' }}"
+          style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;"
+          placeholder="10.99"
+        >
+      </div>
+      
+      <div>
+        <label for="stock" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Stock (Qté) *</label>
+        <input 
+          type="number" 
+          name="stock" 
+          id="stock" 
+          required 
+          min="0"
+          value="{{ product.stock|default:'' }}"
+          style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;"
+          placeholder="100"
+        >
+      </div>
+    </div>
+    
+    <div style="margin-bottom: 2rem;">
+      <label for="category" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Catégorie *</label>
+      <select 
+        name="category" 
+        id="category" 
+        required
+        style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;"
+      >
+        <option value="">-- Sélectionner une catégorie --</option>
+        {% for cat in categories %}
+          <option value="{{ cat.id }}" {% if product.category == cat.id %}selected{% endif %}>
+            {{ cat.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    
+    <div style="display: flex; gap: 1rem;">
+      <button 
+        type="submit" 
+        style="flex: 1; padding: 0.8rem 1.5rem; background: #667eea; color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: 0.2s;"
+      >
+        {% if product %}💾 Mettre à jour{% else %}➕ Créer{% endif %}
+      </button>
+      <a 
+        href="{% url 'admin_products_list' %}" 
+        style="flex: 1; padding: 0.8rem 1.5rem; background: #ddd; color: #333; border: none; border-radius: 6px; font-weight: 600; font-size: 1rem; text-decoration: none; text-align: center; transition: 0.2s;"
+      >
+        ❌ Annuler
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}

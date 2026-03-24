@@ -1,5 +1,6 @@
 from django.db import transaction
-from rest_framework import permissions, viewsets
+from rest_framework import filters, permissions, viewsets
+from django_filters.rest_framework import DjangoFilterBackend
 
 from .messaging import publish_order_created
 from .models import Category, Order, Patient, Product
@@ -25,7 +26,11 @@ class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.select_related("category").all().order_by("name")
     serializer_class = ProductSerializer
     permission_classes = [permissions.IsAuthenticated, IsAdminOrReadOnly]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
     filterset_fields = ("category", "slug")
+    search_fields = ("name", "summary", "sku", "category__name")
+    ordering_fields = ("name", "price", "stock", "expiration_date")
+    ordering = ("name",)
 
 
 class PatientViewSet(viewsets.ModelViewSet):

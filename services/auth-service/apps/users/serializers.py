@@ -10,7 +10,24 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+class UserRegisterSerializer(serializers.ModelSerializer):
+    """Pour l'enregistrement public (password obligatoire)"""
+    password = serializers.CharField(write_only=True, min_length=8, required=True)
+
+    class Meta:
+        model = User
+        fields = ("email", "password", "first_name", "last_name", "role")
+
+    def create(self, validated_data):
+        password = validated_data.pop("password")
+        user = User(**validated_data)
+        user.set_password(password)
+        user.save()
+        return user
+
+
 class UserWriteSerializer(serializers.ModelSerializer):
+    """Pour la modification (password optionnel)"""
     password = serializers.CharField(write_only=True, min_length=8, required=False, allow_blank=True)
 
     class Meta:
@@ -18,9 +35,10 @@ class UserWriteSerializer(serializers.ModelSerializer):
         fields = ("email", "password", "first_name", "last_name", "role", "is_active", "is_staff")
 
     def create(self, validated_data):
-        password = validated_data.pop("password")
+        password = validated_data.pop("password", None)
         user = User(**validated_data)
-        user.set_password(password)
+        if password:
+            user.set_password(password)
         user.save()
         return user
 

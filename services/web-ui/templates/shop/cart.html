@@ -1,143 +1,41 @@
 {% extends "base.html" %}
 
-{% block title %}Panier{% endblock %}
-
-{% block extra_css %}
-<style>
-  .cart-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: var(--card);
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
-  }
-  .cart-table th, .cart-table td {
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-  }
-  .cart-table th {
-    background: var(--green-light);
-    font-weight: 600;
-  }
-  .quantity-control {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .quantity-control input {
-    width: 60px;
-    padding: 0.3rem;
-    text-align: center;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-  }
-  .quantity-control button {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-size: 1.2rem;
-    color: var(--green);
-  }
-  .cart-summary {
-    margin-top: 2rem;
-    padding: 1.5rem;
-    background: var(--card);
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    text-align: right;
-  }
-  .cart-summary p {
-    font-size: 1.2rem;
-    font-weight: 700;
-    margin: 0;
-  }
-  .cart-actions {
-    margin-top: 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .btn-secondary {
-    background: var(--muted);
-    color: white;
-    padding: 0.6rem 1.2rem;
-    border-radius: 8px;
-  }
-  .btn-secondary:hover {
-    background: var(--green-dark);
-    text-decoration: none;
-  }
-  .btn-cart {
-    background-color: var(--green);
-    color: #ffffff;
-    border: 2px solid #ffffff;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: inline-block;
-    text-decoration: none !important;
-  }
-  .btn-cart:hover {
-    background-color: #ffffff;
-    color: var(--green);
-    border: 2px solid var(--green);
-  }
-  .btn-outline-danger {
-    background: transparent;
-    border: 1px solid #e53e3e;
-    color: #e53e3e;
-    padding: 0.3rem 0.8rem;
-    border-radius: 30px;
-    font-size: 0.8rem;
-    transition: 0.2s;
-  }
-  .btn-outline-danger:hover {
-    background: #e53e3e;
-    color: white;
-    text-decoration: none;
-  }
-</style>
-{% endblock %}
+{% block title %}{{ T.cart|default:'Panier' }}{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Panier</h1>
+<h1 class="page-title">{{ T.cart|default:'Panier' }}</h1>
 {% if lines %}
-  <table class="cart-table">
+  <table class="table">
     <thead>
-      <tr><th>Produit</th><th>Prix unit.</th><th>Quantité</th><th>Total</th><th></th> </thead>
+      <tr><th>Produit</th><th>Qté</th><th>Total ligne</th><th></th></tr>
+    </thead>
     <tbody>
       {% for row in lines %}
-        <tr>
-          <td>
-            {% if row.product.image %}
-              <img src="{{ row.product.image.url }}" alt="{{ row.product.name }}" style="height: 50px; width: auto; vertical-align: middle; margin-right: 10px;">
-            {% endif %}
-            {{ row.product.name }}
-          </td>
-          <td>{{ row.product.price_dzd|floatformat:0 }} DA</td>
-          <td>
-            <form method="post" action="{% url 'cart_update' row.product.id %}" class="quantity-control">
-              {% csrf_token %}
-              <button type="submit" name="action" value="decrement">-</button>
-              <input type="number" name="quantity" value="{{ row.quantity }}" min="1" style="width: 60px; text-align: center;" onchange="this.form.submit()">
-              <button type="submit" name="action" value="increment">+</button>
-            </form>
-          </td>
-          <td>{{ row.line_total_dzd|floatformat:0 }} DA</td>
-          <td><a href="{% url 'cart_remove' row.product.id %}" class="btn-outline-danger">Retirer</a></td>
-        </tr>
+          <tr>
+            <td>
+              {% if row.product.image %}
+                <img src="{{ row.product.image.url }}" alt="{{ row.product.name }}" style="height: 40px; width: auto; vertical-align: middle; margin-right: 8px;">
+              {% endif %}
+              {{ row.product.name }}
+            </td>
+            <td>
+              <form method="post" action="{% url 'cart_update' row.product.id %}" style="display: inline-flex; gap: 0.5rem;">
+                {% csrf_token %}
+                <input type="number" name="quantity" value="{{ row.quantity }}" min="1" max="999" style="width: 60px; padding: 0.4rem; border: 1px solid #ddd; border-radius: 6px;">
+                <button type="submit" style="padding: 0.4rem 0.8rem; background: #ddd; border: none; border-radius: 6px; cursor: pointer;">✓</button>
+              </form>
+            </td>
+            <td>{{ row.line_total|floatformat:2 }}&nbsp;DA</td>
+            <td><a href="{% url 'cart_remove' row.product.id %}">Retirer</a></td>
+          </tr>
       {% endfor %}
     </tbody>
   </table>
-
-  <div class="cart-summary">
-    <p>Total : {{ cart_total_dzd|floatformat:0 }} DA</p>
-    <div class="cart-actions">
-      <a href="{% url 'catalog' %}" class="btn-secondary">Continuer mes achats</a>
+  <div class="cart-footer">
+    <p><strong>Total estimé :</strong> {{ cart_total|floatformat:2 }}&nbsp;DA</p>
+    <p class="muted hint">Les remises volume (jusqu’à −5&nbsp;%) sont calculées côté API à la commande.</p>
+    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+      <a class="btn-outline" href="{% url 'catalog' %}">Continuer les achats</a>
       <form method="post" action="{% url 'checkout' %}">
         {% csrf_token %}
         <button type="submit" class="btn-cart">Valider la commande</button>
@@ -146,9 +44,8 @@
   </div>
 {% else %}
   <div class="empty-state">
-    <i class="fas fa-shopping-cart" style="font-size: 3rem; color: var(--muted);"></i>
     <p>Votre panier est vide.</p>
-    <a class="btn-primary" href="{% url 'catalog' %}">Découvrir nos produits</a>
+    <a class="btn-outline" href="{% url 'catalog' %}">Parcourir le catalogue</a>
   </div>
 {% endif %}
 {% endblock %}

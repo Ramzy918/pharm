@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de bord Admin{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto; padding: 2rem;">
+  <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">📊 Tableau de bord Admin</h1>
+  <p style="color: #666; font-size: 1.1rem; margin-bottom: 2rem;">Gérez les produits, les commandes et les utilisateurs.</p>
+  
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+    
+    <!-- Produits Card -->
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; padding: 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+      <h2 style="font-size: 1.7rem; margin-bottom: 0.5rem;">📦 Produits</h2>
+      <p style="font-size: 0.95rem; opacity: 0.9; margin-bottom: 1.5rem;">Gérez votre catalogue de produits</p>
+      <a href="{% url 'admin_products_list' %}" style="display: inline-block; background: white; color: #667eea; padding: 0.8rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; transition: 0.2s;">
+        Voir les produits →
+      </a>
+    </div>
+    
+    <!-- Commandes Card -->
+    <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border-radius: 12px; padding: 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+      <h2 style="font-size: 1.7rem; margin-bottom: 0.5rem;">📋 Commandes</h2>
+      <p style="font-size: 0.95rem; opacity: 0.9; margin-bottom: 1.5rem;">Suivez et gérez les commandes clients</p>
+      <a href="{% url 'admin_orders_list' %}" style="display: inline-block; background: white; color: #f5576c; padding: 0.8rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; transition: 0.2s;">
+        Voir les commandes →
+      </a>
+    </div>
+    
+    <!-- Utilisateurs Card -->
+    <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border-radius: 12px; padding: 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+      <h2 style="font-size: 1.7rem; margin-bottom: 0.5rem;">👥 Utilisateurs</h2>
+      <p style="font-size: 0.95rem; opacity: 0.9; margin-bottom: 1.5rem;">Gérez les comptes utilisateurs</p>
+      <a href="#" style="display: inline-block; background: white; color: #00f2fe; padding: 0.8rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; transition: 0.2s;">
+        Voir les utilisateurs →
+      </a>
+    </div>
+  </div>
+  
+  <div style="margin-top: 3rem; padding: 1.5rem; background: #f8f9fa; border-radius: 12px; border-left: 4px solid #667eea;">
+    <h3 style="margin-top: 0;">✨ Actions rapides</h3>
+    <ul style="list-style: none; padding-left: 0; display: flex; gap: 1rem; flex-wrap: wrap;">
+      <li><a href="{% url 'admin_product_create' %}" style="display: inline-block; background: #667eea; color: white; padding: 0.6rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem;">➕ Ajouter un produit</a></li>
+      <li><a href="{% url 'admin_products_list' %}" style="display: inline-block; background: #f093fb; color: white; padding: 0.6rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem;">📦 Voir le catalogue</a></li>
+      <li><a href="{% url 'admin_orders_list' %}" style="display: inline-block; background: #4facfe; color: white; padding: 0.6rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem;">📋 Voir les commandes</a></li>
+    </ul>
+  </div>
+</div>
+{% endblock %}
