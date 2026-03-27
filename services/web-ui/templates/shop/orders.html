@@ -18,6 +18,10 @@
           </div>
           <time class="text-muted"><i class="fas fa-calendar-alt"></i> {{ o.created_at|date:"d M Y, H:i"|default:o.created_at }}</time>
         </header>
+        <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+          <span style="font-size: 0.95rem;"><strong>Téléphone :</strong> {{ o.phone|default:'-' }}</span>
+          <span style="font-size: 0.95rem;"><strong>Ville :</strong> {{ o.city|default:'-' }}</span>
+        </div>
         
         <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2rem;">
           <div style="flex: 1; min-width: 300px;">

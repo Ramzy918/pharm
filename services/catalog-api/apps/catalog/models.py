@@ -27,8 +27,10 @@ class Product(models.Model):
     sku = models.CharField(max_length=64, unique=True)
     expiration_date = models.DateField(null=True, blank=True)
     
-    # Compteurs pour likes et recommandations
+    # Compteurs et flags
+    rating = models.IntegerField(default=0)
     user_likes = models.PositiveIntegerField(default=0)
+    is_ai_recommended = models.BooleanField(default=False)
     user_recommendations = models.PositiveIntegerField(default=0)
 
     class Meta:
@@ -109,7 +111,8 @@ class ProductRating(models.Model):
     """Simple rating system - user can rate product once and delete rating"""
     auth_user_id = models.PositiveIntegerField(db_index=True)
     product = models.ForeignKey(Product, related_name="ratings", on_delete=models.CASCADE)
-    score = models.PositiveSmallIntegerField(choices=[(i, f"{i}⭐") for i in range(1, 6)])
+    rating = models.PositiveSmallIntegerField(choices=[(i, f"{i}⭐") for i in range(0, 6)])
+    comment = models.TextField(blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
@@ -118,7 +121,7 @@ class ProductRating(models.Model):
         ]
     
     def __str__(self):
-        return f"User {self.auth_user_id} - {self.product.name} - {self.score}/5"
+        return f"User {self.auth_user_id} - {self.product.name} - {self.rating}/5"
 
 
 class ProductRecommendation(models.Model):

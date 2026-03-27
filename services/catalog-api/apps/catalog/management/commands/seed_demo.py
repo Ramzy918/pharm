@@ -18,17 +18,25 @@ class Command(BaseCommand):
             Category.objects.all().delete()
             self.stdout.write("Tous les produits et catégories ont été supprimés.")
 
-        if options["if-empty"] and Product.objects.exists():
+        if options["if_empty"] and Product.objects.exists():
             self.stdout.write("Catalogue déjà peuplé, seed ignoré.")
             return
 
         # Créer les catégories principales
         data = [
-            ("Tests", "tests", "Tests rapides, antigéniques, autotests, diagnostics."),
-            ("Masques", "masques", "Protection respiratoire, chirurgicaux, FFP2, FFP3."),
-            ("Gants", "gants", "Gants usage professionnel, nitrile, latex, vinyle."),
-            ("Consommables", "consommables", "Consommables pharmacie, matériel médical."),
-            ("Bébé", "bebe", "Puériculture et soins bébé, alimentation, hygiène."),
+            ("Bébés", "bebe", "Puériculture et soins bébé, alimentation, hygiène."),
+            ("Tests médicaux", "tests", "Tests rapides, antigéniques, autotests, diagnostics."),
+            ("Masques", "masques", "Masques de protection et chirurgicaux."),
+            ("Gants", "gants", "Gants de protection médicaux."),
+            ("Consommables", "consommables", "Produits consommables médicaux."),
+            ("Gants & protection", "protection", "Protection respiratoire, gants nitrile et latex."),
+            ("Médicaments", "medicaments", "Médicaments sans ordonnance, paracétamol, ibuprofène."),
+            ("Rhume & Grippe", "rhume", "Soins pour le rhume, la toux et les états grippaux."),
+            ("Digestion", "digestion", "Troubles gastriques, digestion et transit."),
+            ("Allergies", "allergie", "Antihistaminiques et soins antiallergiques."),
+            ("Premiers secours", "premiers-secours", "Désinfectants, pansements et matériel d'urgence."),
+            ("Vitamines", "vitamines", "Compléments alimentaires et multivitamines."),
+            ("Para-pharmacie", "para-pharmacie", "Hygiène, cosmétique et soins quotidiens."),
         ]
         cats = {}
         for name, slug, desc in data:
@@ -38,84 +46,105 @@ class Command(BaseCommand):
 
         # Produits étendus pour chaque catégorie
         samples = [
-            # Tests
-            ("tests", "Test antigénique COVID-19 — boîte 25", "test-antigenique-25", "SKU-TST-25", Decimal("35.00"), 500),
-            ("tests", "Test antigénique COVID-19 — boîte 50", "test-antigenique-50", "SKU-TST-50", Decimal("65.00"), 300),
-            ("tests", "Autotest unitaire COVID-19", "autotest-unitaire", "SKU-AUTO-1", Decimal("0.40"), 800),
-            ("tests", "Test grossesse précoce", "test-grossesse", "SKU-TST-GROS", Decimal("2.99"), 150),
-            ("tests", "Test glycémie sanguine", "test-glycemie", "SKU-TST-GLY", Decimal("8.50"), 200),
-            ("tests", "Test urinaire complet", "test-urinaire", "SKU-TST-URI", Decimal("3.99"), 180),
-            ("tests", "Test allergène alimentaire", "test-allergie", "SKU-TST-ALL", Decimal("12.99"), 100),
-            ("tests", "Test cholestérol", "test-cholesterol", "SKU-TST-CHOL", Decimal("6.99"), 120),
-            ("tests", "Test VIH rapide", "test-vih", "SKU-TST-VIH", Decimal("15.99"), 80),
-            ("tests", "Test hépatite C", "test-hepatite", "SKU-TST-HEP", Decimal("18.99"), 60),
+            # Bébés
+            ("bebe", "Lait infantile 1er âge", "lait-1er-age", "SKU-BEBE-L1", Decimal("2600.00"), 100),
+            ("bebe", "Lait 2ème âge", "lait-2eme-age", "SKU-BEBE-L2", Decimal("2800.00"), 100),
+            ("bebe", "Lait anti-colique", "lait-anti-colique", "SKU-BEBE-LAC", Decimal("3200.00"), 80),
+            ("bebe", "Couches bébé (Pampers)", "couches-pampers", "SKU-BEBE-COU", Decimal("2200.00"), 150),
+            ("bebe", "Lingettes bébé", "lingettes-bebe", "SKU-BEBE-LIN", Decimal("260.00"), 200),
+            ("bebe", "Crème érythème fessier", "creme-erytheme", "SKU-BEBE-CRM", Decimal("420.00"), 120),
+            ("bebe", "Sérum physiologique", "serum-physio", "SKU-BEBE-SER", Decimal("210.00"), 300),
+            ("bebe", "Thermomètre digital", "thermometre-digital", "SKU-BEBE-THD", Decimal("1200.00"), 50),
+            ("bebe", "Gel lavant bébé", "gel-lavant-bebe", "SKU-BEBE-GEL", Decimal("900.00"), 100),
+            ("bebe", "Huile bébé", "huile-bebe", "SKU-BEBE-HUI", Decimal("700.00"), 90),
+
+            # Tests médicaux
+            ("tests", "Test grossesse", "test-grossesse", "SKU-TST-GRO", Decimal("320.00"), 200),
+            ("tests", "Test ovulation", "test-ovulation", "SKU-TST-OVU", Decimal("450.00"), 150),
+            ("tests", "Test glycémie (Appareil)", "test-glycemie-app", "SKU-TST-GLY", Decimal("1200.00"), 60),
+            ("tests", "Bandelettes glycémie", "bandelettes-glycemie", "SKU-TST-BAN", Decimal("2500.00"), 100),
+            ("tests", "Test COVID antigénique", "test-covid", "SKU-TST-COV", Decimal("620.00"), 300),
+            ("tests", "Test urinaire", "test-urinaire", "SKU-TST-URI", Decimal("330.00"), 150),
+            ("tests", "Test cholestérol", "test-cholesterol", "SKU-TST-CHO", Decimal("1900.00"), 80),
+            ("tests", "Test VIH rapide", "test-vih", "SKU-TST-VIH", Decimal("1750.00"), 50),
 
             # Masques
-            ("masques", "Masques chirurgicaux Type IIR — boîte 50", "masques-chir-50", "SKU-MSK-50", Decimal("12.50"), 300),
-            ("masques", "Masques chirurgicaux Type II — boîte 50", "masques-chir-2-50", "SKU-MSK-2-50", Decimal("10.50"), 250),
-            ("masques", "Masques FFP2 sans valve — boîte 20", "masques-ffp2-20", "SKU-MSK-FFP2-20", Decimal("25.00"), 200),
-            ("masques", "Masques FFP2 avec valve — boîte 20", "masques-ffp2-valve-20", "SKU-MSK-FFP2V-20", Decimal("28.00"), 150),
-            ("masques", "Masques FFP3 — boîte 10", "masques-ffp3-10", "SKU-MSK-FFP3-10", Decimal("35.00"), 100),
-            ("masques", "Masques enfant — boîte 30", "masques-enfant-30", "SKU-MSK-ENF-30", Decimal("8.99"), 180),
-            ("masques", "Masques lavable réutilisable", "masques-lavable", "SKU-MSK-LAV", Decimal("4.99"), 400),
-            ("masques", "Masques à charbon actif", "masques-charbon", "SKU-MSK-CHAR", Decimal("6.99"), 220),
-            ("masques", "Masques KN95 — boîte 25", "masques-kn95-25", "SKU-MSK-KN95-25", Decimal("22.00"), 160),
-            ("masques", "Masques protection anti-poussière", "masques-poussiere", "SKU-MSK-POU", Decimal("3.99"), 280),
+            ("masques", "Masque chirurgical Type IIR", "masque-iir", "SKU-MSK-IIR", Decimal("0.50"), 1000),
+            ("masques", "Masque FFP2 sans valve", "masque-ffp2", "SKU-MSK-FFP2", Decimal("0.80"), 500),
+            ("masques", "Masque enfant taille S", "masque-enfant", "SKU-MSK-ENF", Decimal("0.45"), 300),
+            ("masques", "Masque lavable réutilisable", "masque-lavable", "SKU-MSK-LAV", Decimal("3.99"), 100),
+            ("masques", "Masque KN95", "masque-kn95", "SKU-MSK-KN95", Decimal("0.75"), 400),
 
             # Gants
-            ("gants", "Gants nitrile Taille S — boîte 100", "gants-nitrile-s", "SKU-GNT-S", Decimal("16.90"), 200),
-            ("gants", "Gants nitrile Taille M — boîte 100", "gants-nitrile-m", "SKU-GNT-M", Decimal("18.90"), 200),
-            ("gants", "Gants nitrile Taille L — boîte 100", "gants-nitrile-l", "SKU-GNT-L", Decimal("19.90"), 200),
-            ("gants", "Gants nitrile Taille XL — boîte 100", "gants-nitrile-xl", "SKU-GNT-XL", Decimal("21.90"), 150),
-            ("gants", "Gants latex Taille M — boîte 100", "gants-latex-m", "SKU-GTX-M", Decimal("14.90"), 180),
-            ("gants", "Gants latex Taille L — boîte 100", "gants-latex-l", "SKU-GTX-L", Decimal("15.90"), 180),
-            ("gants", "Gants vinyle Taille M — boîte 100", "gants-vinyle-m", "SKU-GVN-M", Decimal("12.90"), 220),
-            ("gants", "Gants vinyle Taille L — boîte 100", "gants-vinyle-l", "SKU-GVN-L", Decimal("13.90"), 220),
-            ("gants", "Gants chirurgicaux stériles — boîte 50", "gants-chir-sterile-50", "SKU-GCS-50", Decimal("35.00"), 100),
-            ("gants", "Gants examen non stériles — boîte 100", "gants-examen-100", "SKU-GEX-100", Decimal("8.90"), 300),
+            ("gants", "Gants nitrile taille M", "gants-nitrile-m", "SKU-GNT-NIT-M", Decimal("0.15"), 1000),
+            ("gants", "Gants latex taille L", "gants-latex-l", "SKU-GNT-LTX-L", Decimal("0.12"), 800),
+            ("gants", "Gants vinyle taille S", "gants-vinyle-s", "SKU-GNT-VIN-S", Decimal("0.10"), 600),
+            ("gants", "Gants chirurgicaux stériles", "gants-chirurgicaux", "SKU-GNT-CHIR", Decimal("0.25"), 200),
+            ("gants", "Gants examen non stériles", "gants-examen", "SKU-GNT-EXAM", Decimal("0.08"), 1200),
 
             # Consommables
-            ("consommables", "Seringue 5ml — boîte 100", "seringue-5ml-100", "SKU-SRG-5-100", Decimal("4.99"), 300),
-            ("consommables", "Seringue 10ml — boîte 100", "seringue-10ml-100", "SKU-SRG-10-100", Decimal("5.99"), 280),
-            ("consommables", "Seringue nasale pédiatrique", "seringue-nasale", "SKU-SRG-NAS", Decimal("1.45"), 500),
-            ("consommables", "Aiguille 21G — boîte 100", "aiguille-21g-100", "SKU-AIG-21-100", Decimal("3.99"), 400),
-            ("consommables", "Aiguille 23G — boîte 100", "aiguille-23g-100", "SKU-AIG-23-100", Decimal("3.49"), 400),
-            ("consommables", "Compresses stériles 10x10 — boîte 100", "compresses-10x10-100", "SKU-COM-10-100", Decimal("8.99"), 250),
-            ("consommables", "Compresses stériles 5x5 — boîte 100", "compresses-5x5-100", "SKU-COM-5-100", Decimal("6.99"), 300),
-            ("consommables", "Bandage élastique 5cm", "bandage-elastic-5cm", "SKU-BAN-5", Decimal("2.99"), 400),
-            ("consommables", "Bandage élastique 10cm", "bandage-elastic-10cm", "SKU-BAN-10", Decimal("4.99"), 350),
-            ("consommables", "Alcool 70% 100ml", "alcool-70-100ml", "SKU-ALC-70-100", Decimal("1.99"), 600),
-            ("consommables", "Alcool 70% 250ml", "alcool-70-250ml", "SKU-ALC-70-250", Decimal("3.99"), 400),
-            ("consommables", "Bétadine 30ml", "betadine-30ml", "SKU-BET-30", Decimal("4.99"), 350),
-            ("consommables", "Bétadine 100ml", "betadine-100ml", "SKU-BET-100", Decimal("12.99"), 200),
-            ("consommables", "Gaze stérile 10x10 — paquet 10", "gaze-sterile-10x10", "SKU-GAZ-10", Decimal("3.99"), 300),
-            ("consommables", "Pansement adhésif assorted", "pansement-adhesif", "SKU-PAN-ASS", Decimal("5.99"), 250),
-            ("consommables", "Gants en latex Taille M (unité)", "gants-latex-m-single", "SKU-GTX-M-S", Decimal("0.15"), 1000),
-            ("consommables", "Gants en nitrile Taille M (unité)", "gants-nitrile-m-single", "SKU-GNT-M-S", Decimal("0.18"), 1000),
+            ("consommables", "Seringue 5ml", "seringue-5ml", "SKU-CON-SER5", Decimal("0.20"), 500),
+            ("consommables", "Compresses stériles 10x10", "compresses-10x10", "SKU-CON-COMP", Decimal("2.99"), 200),
+            ("consommables", "Bande élastique 5cm", "bande-5cm", "SKU-CON-BAND", Decimal("1.99"), 150),
+            ("consommables", "Alcool 70% 100ml", "alcool-70-100ml", "SKU-CON-ALC", Decimal("1.49"), 300),
+            ("consommables", "Bétadine 30ml", "betadine-30ml", "SKU-CON-BET", Decimal("3.99"), 100),
 
-            # Bébé
-            ("bebe", "Lait premier âge 0-6 mois — 900g", "lait-premier-age-0-6", "SKU-LAIT-0-6", Decimal("18.99"), 200),
-            ("bebe", "Lait deuxième âge 6-12 mois — 900g", "lait-deuxieme-age-6-12", "SKU-LAIT-6-12", Decimal("19.99"), 180),
-            ("bebe", "Lait croissance 12-24 mois — 900g", "lait-croissance-12-24", "SKU-LAIT-12-24", Decimal("20.99"), 160),
-            ("bebe", "Couches Taille 1 (2-5kg) — paquet 30", "couches-taille-1", "SKU-COU-1", Decimal("12.99"), 150),
-            ("bebe", "Couches Taille 2 (4-8kg) — paquet 28", "couches-taille-2", "SKU-COU-2", Decimal("13.99"), 150),
-            ("bebe", "Couches Taille 3 (6-10kg) — paquet 26", "couches-taille-3", "SKU-COU-3", Decimal("14.99"), 140),
-            ("bebe", "Couches Taille 4 (9-14kg) — paquet 24", "couches-taille-4", "SKU-COU-4", Decimal("15.99"), 130),
-            ("bebe", "Couches Taille 5 (12-16kg) — paquet 22", "couches-taille-5", "SKU-COU-5", Decimal("16.99"), 120),
-            ("bebe", "Biberon anti-colique 250ml", "biberon-anti-colique-250", "SKU-BIB-250", Decimal("8.99"), 200),
-            ("bebe", "Biberon 150ml — lot de 3", "biberon-150ml-3", "SKU-BIB-150-3", Decimal("15.99"), 100),
-            ("bebe", "Gel lavant bébé 500ml", "gel-lavant-bebe-500", "SKU-GLV-500", Decimal("6.99"), 250),
-            ("bebe", "Gel lavant bébé 1L", "gel-lavant-bebe-1l", "SKU-GLV-1L", Decimal("11.99"), 150),
-            ("bebe", "Crème change bébé 100ml", "creme-change-bebe-100", "SKU-CRM-100", Decimal("4.99"), 300),
-            ("bebe", "Crème change bébé 200ml", "creme-change-bebe-200", "SKU-CRM-200", Decimal("7.99"), 200),
-            ("bebe", "Lingettes bébé — paquet 80", "lingettes-bebe-80", "SKU-LIN-80", Decimal("3.99"), 400),
-            ("bebe", "Lingettes bébé — paquet 240", "lingettes-bebe-240", "SKU-LIN-240", Decimal("9.99"), 200),
-            ("bebe", "Thermomètre bébé", "thermometre-bebe", "SKU-THM-BB", Decimal("12.99"), 150),
-            ("bebe", "Aspirateur nasal bébé", "aspirateur-nasal-bebe", "SKU-ASP-NAS", Decimal("8.99"), 180),
-            ("bebe", "Pack hygiène bébé complet", "pack-hygiene-bebe", "SKU-PACK-HYG", Decimal("24.00"), 100),
-            ("bebe", "Couverture bébé coton", "couverture-bebe-coton", "SKU-COUV-COT", Decimal("18.99"), 80),
-            ("bebe", "Sucette orthodontique 0-6mois", "sucette-ortho-0-6", "SKU-SUC-0-6", Decimal("3.99"), 250),
-            ("bebe", "Sucette orthodontique 6-18mois", "sucette-ortho-6-18", "SKU-SUC-6-18", Decimal("3.99"), 250),
+            # Protection
+            ("protection", "Gants latex (boîte 100)", "gants-latex", "SKU-PRO-GLX", Decimal("2250.00"), 120),
+            ("protection", "Gants nitrile (boîte 100)", "gants-nitrile", "SKU-PRO-GNT", Decimal("2650.00"), 100),
+            ("protection", "Masques chirurgicaux (boîte 50)", "masques-chir", "SKU-PRO-MSK", Decimal("550.00"), 200),
+            ("protection", "Gel hydroalcoolique 500ml", "gel-hydro", "SKU-PRO-GEL", Decimal("500.00"), 150),
+            ("protection", "Thermomètre infrarouge", "thermometre-infra", "SKU-PRO-THI", Decimal("6500.00"), 40),
+
+            # Médicaments
+            ("medicaments", "Paracétamol 500mg", "paracetamol-500", "SKU-MED-PAR", Decimal("225.00"), 500),
+            ("medicaments", "Ibuprofène 400mg", "ibuprofene-400", "SKU-MED-IBU", Decimal("350.00"), 400),
+            ("medicaments", "Aspirine 100mg", "aspirine-100", "SKU-MED-ASP", Decimal("175.00"), 300),
+            ("medicaments", "Diclofénac gel 1%", "diclofenac-gel", "SKU-MED-DIC", Decimal("500.00"), 200),
+            ("medicaments", "Spasfon", "spasfon", "SKU-MED-SPA", Decimal("450.00"), 250),
+
+            # Rhume
+            ("rhume", "Fervex Adulte", "fervex", "SKU-RHU-FER", Decimal("475.00"), 300),
+            ("rhume", "Humex Rhume", "humex", "SKU-RHU-HUM", Decimal("550.00"), 250),
+            ("rhume", "Vitamine C 1000mg", "vitamine-c", "SKU-RHU-VIT", Decimal("300.00"), 400),
+            ("rhume", "Spray nasal", "spray-nasal", "SKU-RHU-SPR", Decimal("375.00"), 350),
+            ("rhume", "Sirop toux sèche/grasse", "sirop-toux", "SKU-RHU-SIR", Decimal("500.00"), 280),
+
+            # Digestion
+            ("digestion", "Gaviscon Suspension", "gaviscon", "SKU-DIG-GAV", Decimal("650.00"), 200),
+            ("digestion", "Maalox Anti-acide", "maalox", "SKU-DIG-MAA", Decimal("550.00"), 220),
+            ("digestion", "Smecta 3g", "smecta", "SKU-DIG-SME", Decimal("450.00"), 300),
+            ("digestion", "Charbon actif", "charbon-actif", "SKU-DIG-CHA", Decimal("350.00"), 250),
+            ("digestion", "Sirop digestif", "sirop-digestif", "SKU-DIG-SIR", Decimal("500.00"), 180),
+
+            # Allergies
+            ("allergie", "Cétirizine 10mg", "cetirizine", "SKU-ALL-CET", Decimal("300.00"), 200),
+            ("allergie", "Loratadine 10mg", "loratadine", "SKU-ALL-LOR", Decimal("350.00"), 180),
+            ("allergie", "Crème antihistaminique", "creme-anti-hist", "SKU-ALL-CRM", Decimal("450.00"), 150),
+
+            # Premiers secours
+            ("premiers-secours", "Bétadine solution dermique", "betadine", "SKU-SEC-BET", Decimal("450.00"), 200),
+            ("premiers-secours", "Pansements adhésifs (boîte)", "pansements", "SKU-SEC-PAN", Decimal("225.00"), 300),
+            ("premiers-secours", "Alcool médical 70%", "alcool-medical", "SKU-SEC-ALC", Decimal("300.00"), 250),
+            ("premiers-secours", "Compresses stériles", "compresses", "SKU-SEC-COM", Decimal("350.00"), 300),
+            ("premiers-secours", "Eau oxygénée", "eau-oxygenee", "SKU-SEC-EAU", Decimal("300.00"), 220),
+
+            # Vitamines
+            ("vitamines", "Multivitamines A-Z", "multivitamines", "SKU-VIT-MUL", Decimal("600.00"), 150),
+            ("vitamines", "Magnésium B6", "magnesium", "SKU-VIT-MAG", Decimal("500.00"), 200),
+            ("vitamines", "Fer + Acide Folique", "fer", "SKU-VIT-FER", Decimal("450.00"), 180),
+            ("vitamines", "Oméga 3", "omega-3", "SKU-VIT-OME", Decimal("900.00"), 120),
+
+            # Para-pharmacie
+            ("para-pharmacie", "Crème hydratante corps/visage", "creme-hydratante", "SKU-PAR-HYD", Decimal("1000.00"), 100),
+            ("para-pharmacie", "Crème solaire SPF 50+", "creme-solaire", "SKU-PAR-SOL", Decimal("1650.00"), 80),
+            ("para-pharmacie", "Baume à lèvres", "baume-levres", "SKU-PAR-BAU", Decimal("350.00"), 200),
+            ("para-pharmacie", "Shampooing antipelliculaire", "shampooing", "SKU-PAR-SHA", Decimal("1100.00"), 120),
+            ("para-pharmacie", "Dentifrice blancheur", "dentifrice", "SKU-PAR-DEN", Decimal("350.00"), 300),
+            ("para-pharmacie", "Brosse à dents", "brosse-a-dents", "SKU-PAR-BAD", Decimal("275.00"), 250),
+            ("para-pharmacie", "Bain de bouche", "bain-bouche", "SKU-PAR-BAI", Decimal("650.00"), 180),
+            ("para-pharmacie", "Gel anti-acné", "gel-acne", "SKU-PAR-ACN", Decimal("1050.00"), 100),
+            ("para-pharmacie", "Solution lentilles", "solution-lentilles", "SKU-PAR-SLN", Decimal("1400.00"), 70),
         ]
 
         created_count = 0

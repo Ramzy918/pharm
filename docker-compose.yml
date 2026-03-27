@@ -100,6 +100,8 @@ services:
       - postgres-catalog
       - rabbitmq
       - consul
+    volumes:
+      - C:\Users\hiche\pharm\services\catalog-api:/app
     networks:
       - pharm
     labels:
@@ -137,11 +139,13 @@ services:
       - auth-service
       - catalog-api
       - consul
+    volumes:
+      - ./services/web-ui:/app
     networks:
       - pharm
     labels:
       - traefik.enable=true
-      - traefik.http.routers.pharm-web.rule=Host(`web.localhost`) || Host(`web.localhost:8081`)
+      - traefik.http.routers.pharm-web.rule=Host(`web.localhost`) || Host(`web.localhost:8081`) || Host(`localhost`) || Host(`localhost:8081`)
       - traefik.http.routers.pharm-web.entrypoints=web
       - traefik.http.services.pharm-web.loadbalancer.server.port=8000
 

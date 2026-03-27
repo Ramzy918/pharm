@@ -23,18 +23,24 @@ def main():
             channel = connection.channel()
             channel.exchange_declare(exchange=EXCHANGE, exchange_type="topic", durable=True)
             channel.queue_declare(queue=QUEUE, durable=True)
-            channel.queue_bind(exchange=EXCHANGE, queue=QUEUE, routing_key=ROUTING_KEY)
-            logger.info("En écoute sur %s / %s", QUEUE, ROUTING_KEY)
+            channel.queue_bind(exchange=EXCHANGE, queue=QUEUE, routing_key="order.created")
+            channel.queue_bind(exchange=EXCHANGE, queue=QUEUE, routing_key="stock.empty")
+            logger.info("En écoute sur %s (order.created & stock.empty)", QUEUE)
 
             def callback(ch, method, properties, body):
                 try:
                     payload = json.loads(body.decode("utf-8"))
                 except json.JSONDecodeError:
                     payload = {"raw": body.decode("utf-8", errors="replace")}
-                logger.info(
-                    "Notification commande — simulation envoi e-mail / SMS : %s",
-                    payload,
-                )
+                
+                if method.routing_key == "order.created":
+                    logger.info("Notification commande — simulation envoi e-mail : %s", payload)
+                elif method.routing_key == "stock.empty":
+                    logger.warning("ALERTE STOCK — Produit '%s' (ID:%s) est en rupture !", 
+                                   payload.get("product_name"), payload.get("product_id"))
+                else:
+                    logger.info("Notification reçue [%s]: %s", method.routing_key, payload)
+                
                 ch.basic_ack(delivery_tag=method.delivery_tag)
 
             channel.basic_qos(prefetch_count=10)

@@ -1,52 +1,53 @@
 {% extends "base.html" %}
 
-{% block title %}Gestion des Utilisateurs — Admin{% endblock %}
+{% block title %}Utilisateurs - Admin{% endblock %}
 
 {% block content %}
-<div class="section-head">
-    <h2><i class="fas fa-users"></i> Gestion des Utilisateurs (Professionnels)</h2>
-</div>
-
-<div class="glass-card" style="padding: 2rem;">
-    {% if users %}
-    <table class="table" style="width: 100%; text-align: left; border-collapse: collapse;">
-        <thead>
-            <tr style="border-bottom: 2px solid var(--border);">
-                <th style="padding: 1rem 0;">ID</th>
-                <th style="padding: 1rem;">Nom</th>
-                <th style="padding: 1rem;">Email</th>
-                <th style="padding: 1rem;">Rôle</th>
-                <th style="padding: 1rem;">Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for u in users %}
-            <tr style="border-bottom: 1px solid var(--border);">
-                <td style="padding: 1rem 0;">#{{ u.id }}</td>
-                <td style="padding: 1rem;">{{ u.first_name }}</td>
-                <td style="padding: 1rem;">{{ u.email }}</td>
-                <td style="padding: 1rem;"><span class="badge badge-ok">{{ u.role }}</span></td>
-                <td style="padding: 1rem;">
-                    <button class="btn btn-outline" disabled title="Bientôt disponible"><i
-                            class="fas fa-edit"></i></button>
-                    <button class="btn btn-outline" disabled title="Bientôt disponible" style="color: var(--danger);"><i
-                            class="fas fa-trash"></i></button>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div style="text-align: center; padding: 3rem;">
-        <i class="fas fa-user-slash"
-            style="font-size: 3rem; color: var(--text-muted); opacity: 0.3; margin-bottom: 1rem;"></i>
-        <p>Aucun utilisateur trouvé ou erreur de communication avec le service d'authentification.</p>
+<div class="main">
+  <div class="section-head" style="margin-top: 0;">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <a href="{% url 'admin_dashboard' %}" class="btn btn-outline" style="padding: 0.5rem; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+        <i class="fas fa-arrow-left"></i>
+      </a>
+      <h2><i class="fas fa-users"></i> Gestion des utilisateurs</h2>
     </div>
-    {% endif %}
-</div>
+  </div>
 
-<div style="margin-top: 2rem;">
-    <a href="{% url 'admin_dashboard' %}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Retour au
-        Dashboard</a>
+  <div class="glass-card" style="margin-top: 2rem; padding: 0; overflow: hidden;">
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead style="background: rgba(255, 255, 255, 0.05);">
+        <tr>
+          <th style="padding: 1.25rem; text-align: left; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Nom / Email</th>
+          <th style="padding: 1.25rem; text-align: left; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Rôle</th>
+          <th style="padding: 1.25rem; text-align: left; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Date d'inscription</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+          <td style="padding: 1.25rem;">
+            <div style="font-weight: 600;">{{ user.first_name|default:"Utilisateur" }}</div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">{{ user.email }}</div>
+          </td>
+          <td style="padding: 1.25rem;">
+            <span class="badge {% if user.role == 'ADMIN' %}badge-primary{% else %}badge-secondary{% endif %}" style="padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.75rem;">
+              {{ user.role }}
+            </span>
+          </td>
+          <td style="padding: 1.25rem; color: var(--text-muted);">
+            {{ user.created_at|default:"-" }}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="3" style="padding: 3rem; text-align: center; color: var(--text-muted);">
+            <i class="fas fa-info-circle" style="font-size: 2rem; display: block; margin-bottom: 1rem;"></i>
+            Aucun utilisateur trouvé.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endblock %}

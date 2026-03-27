@@ -1,0 +1,56 @@
+{% extends "admin/base_site.html" %}
+{% load admin_urls admin_stats %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+  <h1>Tableau de bord Admin</h1>
+  <p style="color: #666;">Statistiques rapides sur le catalogue et les commandes.</p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+  <div style="padding: 1.5rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;">
+    <h2 style="margin: 0 0 0.75rem; font-size: 1rem;">Produits</h2>
+    <p style="font-size: 2rem; font-weight: 700; margin: 0;">{% admin_products_count %}</p>
+  </div>
+  <div style="padding: 1.5rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;">
+    <h2 style="margin: 0 0 0.75rem; font-size: 1rem;">Catégories</h2>
+    <p style="font-size: 2rem; font-weight: 700; margin: 0;">{% admin_categories_count %}</p>
+  </div>
+  <div style="padding: 1.5rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;">
+    <h2 style="margin: 0 0 0.75rem; font-size: 1rem;">Commandes</h2>
+    <p style="font-size: 2rem; font-weight: 700; margin: 0;">{% admin_orders_count %}</p>
+  </div>
+  <div style="padding: 1.5rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;">
+    <h2 style="margin: 0 0 0.75rem; font-size: 1rem;">Avis</h2>
+    <p style="font-size: 2rem; font-weight: 700; margin: 0;">{% admin_ratings_count %}</p>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+  <div style="padding: 1.5rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;">
+    <h2 style="margin: 0 0 0.75rem; font-size: 1rem;">Recommandations</h2>
+    <p style="font-size: 2rem; font-weight: 700; margin: 0;">{% admin_recommendations_count %}</p>
+  </div>
+  <div style="padding: 1.5rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;">
+    <h2 style="margin: 0 0 0.75rem; font-size: 1rem;">Likes</h2>
+    <p style="font-size: 2rem; font-weight: 700; margin: 0;">{% admin_likes_count %}</p>
+  </div>
+</div>
+
+<div class="module">
+  <h2>Applications</h2>
+  <div class="app-list">
+    {% for app in app_list %}
+      <div class="app-{% if app.app_label %}{{ app.app_label }}{% endif %}" style="margin-bottom: 1rem;">
+        <h3>{{ app.name }}</h3>
+        <ul>
+          {% for model in app.models %}
+            <li><a href="{{ model.admin_url }}">{{ model.name }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}

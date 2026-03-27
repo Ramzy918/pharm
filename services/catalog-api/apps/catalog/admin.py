@@ -30,30 +30,31 @@ class PatientAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ("id", "auth_user_id", "status", "total", "created_at")
+    list_display = ("id", "auth_user_id", "status", "total", "phone", "city", "created_at")
     list_filter = ("status",)
+    search_fields = ("auth_user_id", "phone", "city")
     inlines = [OrderLineInline]
 
 
 @admin.register(ProductLike)
 class ProductLikeAdmin(admin.ModelAdmin):
-    list_display = ("user", "product", "created_at")
+    list_display = ("auth_user_id", "product", "created_at")
     list_filter = ("created_at", "product")
-    search_fields = ("user__email", "product__name")
+    search_fields = ("auth_user_id", "product__name")
     readonly_fields = ("created_at",)
 
 
 @admin.register(ProductRating)
 class ProductRatingAdmin(admin.ModelAdmin):
-    list_display = ("user", "product", "rating", "created_at")
+    list_display = ("auth_user_id", "product", "rating", "created_at")
     list_filter = ("rating", "created_at", "product")
-    search_fields = ("user__email", "product__name")
+    search_fields = ("auth_user_id", "product__name")
     readonly_fields = ("created_at",)
 
 
 @admin.register(ProductRecommendation)
 class ProductRecommendationAdmin(admin.ModelAdmin):
-    list_display = ("user", "product", "created_at")
+    list_display = ("auth_user_id", "product", "created_at")
     list_filter = ("created_at", "product")
-    search_fields = ("user__email", "product__name")
+    search_fields = ("auth_user_id", "product__name")
     readonly_fields = ("created_at",)

@@ -18,6 +18,13 @@ def auth_token(*, email: str, password: str) -> dict[str, Any]:
     return r.json()
 
 
+def auth_get(path: str, token: str, params: dict[str, Any] | None = None) -> Any:
+    url = f"{settings.AUTH_INTERNAL_URL.rstrip('/')}/api/{path.lstrip('/')}"
+    r = requests.get(url, headers=_headers(token), params=params, timeout=20)
+    r.raise_for_status()
+    return r.json()
+
+
 def api_get(path: str, token: str, params: dict[str, Any] | None = None) -> Any:
     url = f"{settings.API_INTERNAL_URL.rstrip('/')}/api/{path.lstrip('/')}"
     r = requests.get(url, headers=_headers(token), params=params, timeout=20)
@@ -25,9 +32,9 @@ def api_get(path: str, token: str, params: dict[str, Any] | None = None) -> Any:
     return r.json()
 
 
-def api_post(path: str, token: str, payload: dict) -> Any:
+def api_post(path: str, token: str, payload: dict | None = None) -> Any:
     url = f"{settings.API_INTERNAL_URL.rstrip('/')}/api/{path.lstrip('/')}"
-    r = requests.post(url, json=payload, headers=_headers(token), timeout=30)
+    r = requests.post(url, json=payload or {}, headers=_headers(token), timeout=30)
     r.raise_for_status()
     if r.text.strip():
         return r.json()
@@ -52,9 +59,9 @@ def auth_register(email: str, password: str, first_name: str, role: str = "PRO")
     return None
 
 
-def api_patch(path: str, token: str, payload: dict) -> Any:
+def api_patch(path: str, token: str, payload: dict | None = None) -> Any:
     url = f"{settings.API_INTERNAL_URL.rstrip('/')}/api/{path.lstrip('/')}"
-    r = requests.patch(url, json=payload, headers=_headers(token), timeout=30)
+    r = requests.patch(url, json=payload or {}, headers=_headers(token), timeout=30)
     r.raise_for_status()
     if r.text.strip():
         return r.json()

@@ -1,60 +1,47 @@
 {% extends "base.html" %}
 
-{% block title %}Statistiques de Vente — Admin{% endblock %}
+{% block title %}Statistiques - Admin{% endblock %}
 
 {% block content %}
-<div class="section-head">
-    <h2><i class="fas fa-chart-line"></i> Statistiques du Marketplace</h2>
-</div>
+<div class="main">
+  <div class="section-head" style="margin-top: 0;">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <a href="{% url 'admin_dashboard' %}" class="btn btn-outline" style="padding: 0.5rem; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+        <i class="fas fa-arrow-left"></i>
+      </a>
+      <h2><i class="fas fa-chart-line"></i> Statistiques de la plateforme</h2>
+    </div>
+  </div>
 
-<div class="grid-cols-4" style="margin-bottom: 2rem;">
-    <div class="glass-card" style="padding: 1.5rem; text-align: center;">
-        <span class="text-muted" style="display: block; margin-bottom: 0.5rem;">Commandes Totales</span>
-        <strong style="font-size: 2rem; color: var(--text-main);">{{ orders_count }}</strong>
+  <div class="grid-cols-4" style="margin-top: 2rem;">
+    <!-- Revenu Total -->
+    <div class="glass-card" style="text-align: center; border-bottom: 4px solid var(--primary);">
+      <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Revenu Total</div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--primary);">{{ stats.total_revenue|floatformat:2 }} DA</div>
     </div>
-    <div class="glass-card" style="padding: 1.5rem; text-align: center;">
-        <span class="text-muted" style="display: block; margin-bottom: 0.5rem;">Chiffre d'Affaires</span>
-        <strong style="font-size: 2rem; color: var(--primary);">{{ total_revenue|floatformat:2 }} DA</strong>
-    </div>
-    <div class="glass-card" style="padding: 1.5rem; text-align: center;">
-        <span class="text-muted" style="display: block; margin-bottom: 0.5rem;">En Attente</span>
-        <strong style="font-size: 2rem; color: var(--warning);">{{ stats.PENDING }}</strong>
-    </div>
-    <div class="glass-card" style="padding: 1.5rem; text-align: center;">
-        <span class="text-muted" style="display: block; margin-bottom: 0.5rem;">Livrées</span>
-        <strong style="font-size: 2rem; color: var(--success);">{{ stats.SHIPPED }}</strong>
-    </div>
-</div>
 
-<div class="glass-card" style="padding: 2rem;">
-    <h3 style="margin-bottom: 1.5rem;"><i class="fas fa-history"></i> Dernières Commandes</h3>
-    <table class="table" style="width: 100%; text-align: left; border-collapse: collapse;">
-        <thead>
-            <tr style="border-bottom: 2px solid var(--border);">
-                <th style="padding: 1rem 0;">Date</th>
-                <th style="padding: 1rem;">Numéro</th>
-                <th style="padding: 1rem;">Total</th>
-                <th style="padding: 1rem;">Statut</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for o in recent_orders %}
-            <tr style="border-bottom: 1px solid var(--border);">
-                <td style="padding: 1rem 0;">{{ o.created_at|date:"d M Y" }}</td>
-                <td style="padding: 1rem;">#{{ o.order_number|default:o.id }}</td>
-                <td style="padding: 1rem;">{{ o.total }} DA</td>
-                <td style="padding: 1rem;">
-                    <span class="badge {% if o.status == 'SHIPPED' or o.status == 'CONFIRMED' %}badge-ok{% elif o.status == 'PENDING' %}badge-low{% else %}badge-out{% endif %}">
-                        {{ o.status }}
-                    </span>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+    <!-- Commandes -->
+    <div class="glass-card" style="text-align: center; border-bottom: 4px solid var(--warning);">
+      <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Total Commandes</div>
+      <div style="font-size: 2rem; font-weight: 700;">{{ stats.total_orders }}</div>
+    </div>
 
-<div style="margin-top: 2rem;">
-    <a href="{% url 'admin_dashboard' %}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Retour au Dashboard</a>
+    <!-- Produits -->
+    <div class="glass-card" style="text-align: center; border-bottom: 4px solid #3b82f6;">
+      <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Produits Actifs</div>
+      <div style="font-size: 2rem; font-weight: 700;">{{ stats.products_count }}</div>
+    </div>
+
+    <!-- En attente -->
+    <div class="glass-card" style="text-align: center; border-bottom: 4px solid #ef4444;">
+      <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">En attente</div>
+      <div style="font-size: 2rem; font-weight: 700; color: #ef4444;">{{ stats.pending_orders }}</div>
+    </div>
+  </div>
+
+  <div class="glass-card" style="margin-top: 2rem;">
+    <h3><i class="fas fa-info-circle"></i> Notes</h3>
+    <p class="text-muted">Ces statistiques sont calculées en temps réel à partir des services de catalogue et de commandes. Le revenu total exclut les commandes annulées.</p>
+  </div>
 </div>
 {% endblock %}

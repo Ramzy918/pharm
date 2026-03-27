@@ -53,18 +53,44 @@
   </div>
   
   <div class="glass-card" style="padding: 2rem; background: var(--body-bg);">
-    <div style="display: flex; flex-direction: column; align-items: flex-end;">
-      <h3 style="font-size: 1.5rem; margin: 0 0 0.5rem;">Total estimé : <span style="font-size: 2rem; color: var(--text-main);">{{ cart_total|floatformat:2 }}&nbsp;DA</span></h3>
-      <p class="text-muted" style="margin-bottom: 2rem;"><i class="fas fa-info-circle"></i> Les remises volume (jusqu’à −5&nbsp;%) sont calculées par l'API lors de la validation.</p>
-      
-      <div style="display: flex; gap: 1rem; width: 100%; justify-content: flex-end;">
-        <a class="btn btn-outline" href="{% url 'catalog' %}"><i class="fas fa-arrow-left"></i> Continuer mes achats</a>
-        <form method="post" action="{% url 'checkout' %}">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-primary" style="font-size: 1.1rem; padding: 0.8rem 2rem;"><i class="fas fa-check-circle"></i> Valider la commande</button>
-        </form>
+    <form method="post" action="{% url 'checkout' %}">
+      {% csrf_token %}
+      <div style="margin-bottom: 2rem;">
+        <h3 style="margin-bottom: 1rem;"><i class="fas fa-truck"></i> Informations de livraison</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Téléphone <span style="color: var(--danger);">*</span></label>
+            <input type="text" name="phone" required placeholder="Ex: 0550 00 00 00" class="form-input" style="width: 100%;">
+          </div>
+          <div class="form-group">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Ville <span style="color: var(--danger);">*</span></label>
+            <input type="text" name="city" required placeholder="Ex: Alger" class="form-input" style="width: 100%;">
+          </div>
+          <div class="form-group">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Commune</label>
+            <input type="text" name="commune" placeholder="Ex: Kouba" class="form-input" style="width: 100%;">
+          </div>
+          <div class="form-group">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Code Postal</label>
+            <input type="text" name="postal_code" placeholder="Ex: 16000" class="form-input" style="width: 100%;">
+          </div>
+        </div>
+        <div class="form-group" style="margin-top: 1rem;">
+          <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Adresse détaillée <span style="color: var(--danger);">*</span></label>
+          <textarea name="detailed_address" required placeholder="Numéro, Rue, Quartier..." class="form-input" style="width: 100%; height: 80px;"></textarea>
+        </div>
       </div>
-    </div>
+
+      <div style="display: flex; flex-direction: column; align-items: flex-end;">
+        <h3 style="font-size: 1.5rem; margin: 0 0 0.5rem;">Total estimé : <span style="font-size: 2rem; color: var(--text-main);">{{ cart_total|floatformat:2 }}&nbsp;DA</span></h3>
+        <p class="text-muted" style="margin-bottom: 2rem;"><i class="fas fa-info-circle"></i> Les remises volume (jusqu’à −5&nbsp;%) sont calculées par l'API lors de la validation.</p>
+        
+        <div style="display: flex; gap: 1rem; width: 100%; justify-content: flex-end;">
+          <a class="btn btn-outline" href="{% url 'catalog' %}"><i class="fas fa-arrow-left"></i> Continuer mes achats</a>
+          <button type="submit" class="btn btn-primary" style="font-size: 1.1rem; padding: 0.8rem 2rem;"><i class="fas fa-check-circle"></i> Valider la commande</button>
+        </div>
+      </div>
+    </form>
   </div>
 {% else %}
   <div class="glass-card" style="text-align: center; padding: 5rem 2rem;">

@@ -37,7 +37,7 @@ docker compose up --build
 
 Les ports peuvent être mappés autrement dans `docker-compose.yml` (ex. **8081** au lieu de 80). Adaptez les URLs :
 
-- **Interface web** : `http://web.localhost:8081` (ou `:80` si vous mappez `80:80`)  
+- **Interface web** : `http://localhost:8081` (ou `:80` si vous mappez `80:80`)  
 - **Traefik dashboard** : `http://localhost:8082` (si `8082:8080` est défini)  
 - **Consul** : `http://localhost:8501` (si `8501:8500`)  
 - **RabbitMQ management** : `http://localhost:15673` (si `15673:15672`) (`guest` / `guest` par défaut)

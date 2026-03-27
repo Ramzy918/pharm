@@ -49,7 +49,7 @@ class ProductSerializer(serializers.ModelSerializer):
     def get_is_liked_by_user(self, obj):
         request = self.context.get('request')
         if request and hasattr(request, 'user') and request.user.is_authenticated:
-            return ProductLike.objects.filter(user=request.user, product=obj).exists()
+            return ProductLike.objects.filter(auth_user_id=request.user.id, product=obj).exists()
         return False
     
     def get_user_likes(self, obj):
@@ -67,14 +67,14 @@ class ProductSerializer(serializers.ModelSerializer):
     def get_user_rating(self, obj):
         request = self.context.get('request')
         if request and hasattr(request, 'user') and request.user.is_authenticated:
-            rating = ProductRating.objects.filter(user=request.user, product=obj).first()
+            rating = ProductRating.objects.filter(auth_user_id=request.user.id, product=obj).first()
             return rating.rating if rating else None
         return None
     
     def get_is_recommended_by_user(self, obj):
         request = self.context.get('request')
         if request and hasattr(request, 'user') and request.user.is_authenticated:
-            return ProductRecommendation.objects.filter(user=request.user, product=obj).exists()
+            return ProductRecommendation.objects.filter(auth_user_id=request.user.id, product=obj).exists()
         return False
     
     def get_user_recommendations(self, obj):
@@ -195,6 +195,13 @@ class OrderCreateSerializer(serializers.Serializer):
             OrderLine.objects.create(order=order, product=p, quantity=qty, unit_price=p.price)
             subtotal += p.price * qty
             Product.objects.filter(pk=p.pk).update(stock=F("stock") - qty)
+            
+            # Re-fetch to check if stock is now zero
+            p.refresh_from_db()
+            if p.stock == 0:
+                from .messaging import publish_stock_empty
+                transaction.on_commit(lambda: publish_stock_empty(product_id=p.pk, product_name=p.name))
+        
         total, pct = apply_discount(subtotal)
         order.subtotal = subtotal
         order.discount_percent = pct
@@ -218,8 +225,8 @@ class ProductRatingCreateSerializer(serializers.ModelSerializer):
         fields = ('rating', 'comment')
     
     def validate_rating(self, value):
-        if value < 1 or value > 5:
-            raise serializers.ValidationError("La note doit être entre 1 et 5.")
+        if value < 0 or value > 5:
+            raise serializers.ValidationError("La note doit être entre 0 et 5.")
         return value
 
 
@@ -227,5 +234,5 @@ class ProductRecommendationSerializer(serializers.ModelSerializer):
     """Serializer for product recommendations"""
     class Meta:
         model = ProductRecommendation
-        fields = ('id', 'user', 'product', 'created_at')
-        read_only_fields = ('id', 'user', 'product', 'created_at')
+        fields = ('id', 'auth_user_id', 'product', 'created_at')
+        read_only_fields = ('id', 'auth_user_id', 'product', 'created_at')

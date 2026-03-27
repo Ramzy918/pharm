@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
 from requests import HTTPError, RequestException
 import json
 
@@ -168,16 +169,43 @@ def catalog(request):
     q = request.GET.get("q", "").strip()
     category = request.GET.get("category", "").strip()
     min_stock = request.GET.get("min_stock", "").strip()
+    selected_category_id = None
+
     if q:
         params["search"] = q
+
+    # Charge les catégories d'abord pour pouvoir gérer slug et id interchangeables.
+    try:
+        categories_data = api_client.api_get("categories/", _token(request))
+        categories = categories_data.get("results", categories_data) if isinstance(categories_data, dict) else categories_data
+        if not isinstance(categories, list):
+            categories = []
+    except RequestException:
+        categories = []
+
     if category:
-        params["category"] = category
+        if category.isdigit():
+            params["category"] = category
+            selected_category_id = int(category)
+        else:
+            category_slug = category.lower()
+            if category_slug == "test":
+                category_slug = "tests"
+            params["category__slug"] = category_slug
+            for cat in categories:
+                if str(cat.get("slug", "")).lower() == category_slug:
+                    selected_category_id = cat.get("id")
+                    break
+                if str(cat.get("name", "")).lower() == category_slug:
+                    selected_category_id = cat.get("id")
+                    params["category__slug"] = cat.get("slug")
+                    break
 
     try:
         data = api_client.api_get("products/", _token(request), params=params if params else None)
     except RequestException:
         messages.error(request, "Catalogue indisponible.")
-        return render(request, "shop/catalog.html", {"results": [], "categories": []})
+        return render(request, "shop/catalog.html", {"results": [], "categories": categories})
 
     if isinstance(data, dict) and "results" in data:
         results = data["results"]
@@ -219,16 +247,11 @@ def catalog(request):
             product["expired"] = False
             product["expiring_soon"] = False
 
-    # catégories pour le filtre client
-    try:
-        categories_data = api_client.api_get("categories/", _token(request))
-        categories = categories_data.get("results", categories_data) if isinstance(categories_data, dict) else categories_data
-        if not isinstance(categories, list):
-            categories = []
-    except RequestException:
-        categories = []
-
-    return render(request, "shop/catalog.html", {"results": results, "categories": categories})
+    return render(request, "shop/catalog.html", {
+        "results": results,
+        "categories": categories,
+        "selected_category_id": selected_category_id,
+    })
 
 
 def _get_cart(request) -> dict[str, int]:
@@ -318,9 +341,17 @@ def checkout(request):
     if not cart:
         messages.warning(request, "Votre panier est vide.")
         return redirect("cart")
-    payload_lines = [{"product_id": int(k), "quantity": int(v)} for k, v in cart.items()]
+    payload = {
+        "lines": [{"product_id": int(k), "quantity": int(v)} for k, v in cart.items()],
+        "phone": request.POST.get("phone", ""),
+        "city": request.POST.get("city", ""),
+        "commune": request.POST.get("commune", ""),
+        "detailed_address": request.POST.get("detailed_address", ""),
+        "postal_code": request.POST.get("postal_code", ""),
+        "delivery_method": "domicile"
+    }
     try:
-        api_client.api_post("orders/", _token(request), {"lines": payload_lines})
+        api_client.api_post("orders/", _token(request), payload)
     except HTTPError as e:
         messages.error(request, str(e))
         return redirect("cart")
@@ -529,4 +560,127 @@ def admin_order_detail(request, order_id: int):
             except RequestException:
                 messages.error(request, "Erreur lors de la mise à jour du statut.")
     
-    return render(request, "shop/admin/order_detail.html", {"order": order})  
+    return render(request, "shop/admin/order_detail.html", {"order": order})
+
+
+def admin_statistics(request):
+    """Statistiques globales pour l'admin"""
+    redir = _require_admin(request)
+    if redir:
+        return redir
+    
+    try:
+        # Fetch stats from catalog-api (if implemented) or calculate from available data
+        orders_data = api_client.api_get("orders/", _token(request))
+        orders = orders_data.get("results", orders_data) if isinstance(orders_data, dict) else orders_data
+        
+        products_data = api_client.api_get("products/", _token(request))
+        # Handle cases where products_data might be a list or a dict with 'results'
+        if isinstance(products_data, dict):
+            products_count = products_data.get("count", len(products_data.get("results", [])))
+        else:
+            products_count = len(products_data)
+        
+        # Calculate revenue from orders
+        total_revenue = 0
+        if isinstance(orders, list):
+            total_revenue = sum(float(o.get("total", 0)) for o in orders if o.get("status") != "CANCELLED")
+            pending_orders = len([o for o in orders if o.get("status") == "PENDING"])
+        else:
+            orders = []
+            pending_orders = 0
+            
+        stats = {
+            "total_orders": len(orders),
+            "total_revenue": total_revenue,
+            "products_count": products_count,
+            "pending_orders": pending_orders,
+        }
+    except Exception as e:
+        messages.error(request, f"Erreur lors du chargement des statistiques: {str(e)}")
+        stats = {
+            "total_orders": 0,
+            "total_revenue": 0,
+            "products_count": 0,
+            "pending_orders": 0,
+        }
+        
+    return render(request, "shop/admin/statistics.html", {"stats": stats})
+
+
+def admin_users_list(request):
+    """Liste des utilisateurs (admin)"""
+    redir = _require_admin(request)
+    if redir:
+        return redir
+    
+    try:
+        data = api_client.auth_get("users/", _token(request))
+        users = data.get("results", data) if isinstance(data, dict) else data
+        if not isinstance(users, list):
+            users = []
+    except Exception as e:
+        messages.error(request, f"Impossible de charger la liste des utilisateurs: {str(e)}")
+        users = []
+        
+    return render(request, "shop/admin/users_list.html", {"users": users})
+
+
+# ===== PROXY INTERACTION VIEWS =====
+
+@csrf_exempt
+def product_like(request, product_id):
+    if not _token(request):
+        return json_response({"error": "Unauthorized"}, status=401)
+    if request.method != "POST":
+        return json_response({"error": "Method not allowed"}, status=405)
+    try:
+        data = api_client.api_post(f"products/{product_id}/like/", _token(request))
+        return json_response(data)
+    except RequestException as e:
+        return json_response({"error": str(e)}, status=500)
+
+
+@csrf_exempt
+def product_recommend(request, product_id):
+    if not _token(request):
+        return json_response({"error": "Unauthorized"}, status=401)
+    if request.method != "POST":
+        return json_response({"error": "Method not allowed"}, status=405)
+    try:
+        data = api_client.api_post(f"products/{product_id}/recommend/", _token(request))
+        return json_response(data)
+    except RequestException as e:
+        return json_response({"error": str(e)}, status=500)
+
+
+@csrf_exempt
+def product_rate(request, product_id):
+    if not _token(request):
+        return json_response({"error": "Unauthorized"}, status=401)
+    if request.method == "POST":
+        try:
+            body = json.loads(request.body)
+            data = api_client.api_post(f"products/{product_id}/rate/", _token(request), body)
+            return json_response(data)
+        except RequestException as e:
+            return json_response({"error": str(e)}, status=500)
+    return json_response({"error": "Method not allowed"}, status=405)
+
+
+@csrf_exempt
+def product_unrate(request, product_id):
+    if not _token(request):
+        return json_response({"error": "Unauthorized"}, status=401)
+    if request.method != "POST":
+        return json_response({"error": "Method not allowed"}, status=405)
+    try:
+        data = api_client.api_post(f"products/{product_id}/unrate/", _token(request))
+        return json_response(data)
+    except RequestException as e:
+        return json_response({"error": str(e)}, status=500)
+
+
+def json_response(data, status=200):
+    from django.http import JsonResponse
+    return JsonResponse(data, status=status)

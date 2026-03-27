@@ -224,10 +224,75 @@ body.dark .search-hero {
   border-top: 1px dashed var(--card-border);
 }
 .price { font-size: 1.4rem; font-weight: 800; color: var(--primary); }
-.product-summary { font-size: 0.95rem; color: var(--text-muted); margin-bottom: 1.5rem;  display: -webkit-box;
+.product-summary { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;  display: -webkit-box;
   line-clamp: 2;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; }
+
+.product-rating-summary {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.product-interactions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btn-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  padding: 0;
+}
+
+.btn-heart {
+  background: rgba(239, 68, 68, 0.08);
+  color: #EF4444 !important;
+  border: 1px solid rgba(239, 68, 68, 0.1);
+}
+.btn-heart.active {
+  background: #EF4444;
+  color: white !important;
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+}
+
+.recommendation-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+}
+.recommendation-toggle:hover {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
+.recommendation-toggle.active {
+  color: var(--primary-dark);
+}
+.recommendation-toggle i {
+  font-size: 1.1rem;
+}
+
+.badge-points {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  font-weight: 700;
+  padding: 0.25rem 0.75rem;
+  border-radius: 50px;
+  font-size: 0.8rem;
+}
 
 /* Badges */
 .badge {
@@ -289,6 +354,34 @@ body.dark .search-hero {
 .category-pill span { font-weight: 700; font-size: 1.05rem; color: var(--text-main); }
 
 /* Utilities */
+.star-rating {
+  display: inline-flex;
+  gap: 2px;
+  cursor: pointer;
+}
+.star-rating i {
+  color: #D1D5DB;
+  transition: color 0.2s ease;
+}
+.star-rating i:hover,
+.star-rating i.active {
+  color: var(--warning);
+}
+
+.btn-delete-rating {
+  font-size: 0.75rem;
+  color: var(--danger);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-left: 0.5rem;
+}
+.btn-delete-rating:hover {
+  color: #B91C1C;
+}
+
 .text-muted { color: var(--text-muted); }
 .auth-notice { font-size: 0.85rem; color: var(--text-muted); text-align: center; display: block; }
 .form-input {

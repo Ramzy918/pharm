@@ -32,7 +32,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     permission_classes = [IsAdminOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
-    filterset_fields = ("category", "slug")
+    filterset_fields = ("category", "category__slug", "slug")
     search_fields = ("name", "summary", "sku", "category__name")
     ordering_fields = ("name", "price", "stock", "expiration_date")
     ordering = ("name",)
@@ -90,7 +90,7 @@ def product_like_view(request, pk):
     try:
         product = Product.objects.get(pk=pk)
         like, created = ProductLike.objects.get_or_create(
-            user=request.user,
+            auth_user_id=request.user.id,
             product=product
         )
         
@@ -122,7 +122,7 @@ def product_rate_view(request, pk):
         
         # Get or create rating
         rating, created = ProductRating.objects.get_or_create(
-            user=request.user,
+            auth_user_id=request.user.id,
             product=product,
             defaults={
                 'rating': request.data.get('rating', 5),
@@ -163,7 +163,7 @@ def product_unrate_view(request, pk):
     """Remove a product rating"""
     try:
         product = Product.objects.get(pk=pk)
-        rating = ProductRating.objects.filter(user=request.user, product=product).first()
+        rating = ProductRating.objects.filter(auth_user_id=request.user.id, product=product).first()
         
         if rating:
             rating.delete()
@@ -205,7 +205,7 @@ def product_recommend_view(request, pk):
         
         # Toggle recommendation
         recommendation, created = ProductRecommendation.objects.get_or_create(
-            user=request.user,
+            auth_user_id=request.user.id,
             product=product
         )
         
