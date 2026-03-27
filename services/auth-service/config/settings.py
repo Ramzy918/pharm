@@ -81,7 +81,9 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
 }
 
-JWT_SIGNING_KEY = env("JWT_SIGNING_KEY", default=SECRET_KEY)
+# Important: in dev, services might be started outside docker-compose.
+# If each service falls back to its own SECRET_KEY, JWTs won't validate across services.
+JWT_SIGNING_KEY = env("JWT_SIGNING_KEY", default="insecure-dev-shared-jwt-signing-key")
 
 SIMPLE_JWT = {
     "SIGNING_KEY": JWT_SIGNING_KEY,
