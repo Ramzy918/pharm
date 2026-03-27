@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .messaging import publish_order_created
-from .models import Category, Order, Patient, Product, ProductRating, ProductLike
+from .models import Category, Order, Patient, Product, ProductRating, ProductLike, ProductRecommendation
 from .permissions import IsAdminOrReadOnly, IsOwnerOrAdmin
 from .serializers import (
     CategorySerializer,
@@ -16,6 +16,7 @@ from .serializers import (
     ProductSerializer,
     ProductRatingSerializer,
     ProductRatingCreateSerializer,
+    ProductRecommendationSerializer,
 )
 
 
@@ -190,6 +191,80 @@ def product_ratings_view(request, pk):
         product = Product.objects.get(pk=pk)
         ratings = ProductRating.objects.filter(product=product).order_by('-created_at')
         serializer = ProductRatingSerializer(ratings, many=True)
+        return Response(serializer.data)
+    except Product.DoesNotExist:
+        return Response({"error": "Produit non trouvé"}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def product_recommend_view(request, pk):
+    """Recommend or unrecommend a product (toggle)"""
+    try:
+        product = Product.objects.get(pk=pk)
+        
+        # Toggle recommendation
+        recommendation, created = ProductRecommendation.objects.get_or_create(
+            user=request.user,
+            product=product
+        )
+        
+        if not created:
+            # Remove recommendation
+            recommendation.delete()
+            return Response({
+                "message": "Recommandation retirée",
+                "recommended": False,
+                "recommendations_count": ProductRecommendation.objects.filter(product=product).count()
+            })
+        else:
+            # Add recommendation
+            return Response({
+                "message": "Produit recommandé !",
+                "recommended": True,
+                "recommendations_count": ProductRecommendation.objects.filter(product=product).count()
+            })
+    except Product.DoesNotExist:
+        return Response({"error": "Produit non trouvé"}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def product_ai_recommend_view(request, pk):
+    """AI-based product recommendation"""
+    try:
+        product = Product.objects.get(pk=pk)
+        
+        # Simple AI logic: recommend based on similar products in category
+        similar_products = Product.objects.filter(
+            category=product.category
+        ).exclude(id=product.id)[:3]
+        
+        recommendations = []
+        for similar_product in similar_products:
+            recommendations.append({
+                "id": similar_product.id,
+                "name": similar_product.name,
+                "price": similar_product.price,
+                "reason": f"Similaire à {product.name} dans la catégorie {product.category.name}"
+            })
+        
+        return Response({
+            "message": "Recommandations IA générées",
+            "recommendations": recommendations
+        })
+    except Product.DoesNotExist:
+        return Response({"error": "Produit non trouvé"}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def product_recommendations_view(request, pk):
+    """Get all recommendations for a product"""
+    try:
+        product = Product.objects.get(pk=pk)
+        recommendations = ProductRecommendation.objects.filter(product=product).order_by('-created_at')
+        serializer = ProductRecommendationSerializer(recommendations, many=True)
         return Response(serializer.data)
     except Product.DoesNotExist:
         return Response({"error": "Produit non trouvé"}, status=status.HTTP_404_NOT_FOUND)

@@ -1,4 +1,4 @@
-# 🎯 Guide Complet: De l'Inscription à l'Achat
+# 🎯 Guide Complet: De l'Inscription à l'Achat - IMPLEMENTATION
 
 ## 📖 Table des Matières
 1. [Vue Générale](#vue-générale)
@@ -16,8 +16,7 @@
 ### ⭐ Système de Likes (J'aime)
 - **Modèle**: `ProductLike` avec contrainte unique (produit, utilisateur)
 - **API Endpoints**:
-  - `POST /api/products/{id}/like/` - Ajouter un like
-  - `POST /api/products/{id}/unlike/` - Retirer un like
+  - `POST /api/products/{id}/like/` - Ajouter/retirer un like (toggle)
 - **Compteur**: Champ `user_likes` sur le modèle Product
 - **Interface Admin**: `ProductLikeAdmin` pour gestion
 - **Comportement**: Un utilisateur ne peut liker qu'une fois par produit
@@ -27,8 +26,9 @@
 - **API Endpoints**:
   - `POST /api/products/{id}/recommend/` - Basculer recommandation (toggle)
   - `POST /api/products/{id}/ai_recommend/` - Recommandation IA
+  - `GET /api/products/{id}/recommendations/` - Lister recommandations
 - **Compteur**: Champ `user_recommendations` sur le modèle Product
-- **Interface Admin**: `ProductRecommendationAdmin`
+- **Interface Admin**: `ProductRecommendationAdmin` 
 - **Comportement**: Toggle (ajouter/retirer en un clic)
 
 ### ⭐⭐⭐⭐⭐ Système de Notation (Rating)
@@ -36,14 +36,15 @@
 - **API Endpoints**:
   - `POST /api/products/{id}/rate/` - Noter un produit (1-5 étoiles)
   - `POST /api/products/{id}/unrate/` - Retirer la note
-- **Calcul**: Moyenne automatique avec `get_average_rating()`
-- **Interface Admin**: `ProductRatingAdmin`
+  - `GET /api/products/{id}/ratings/` - Voir toutes les notes
+- **Calcul**: Moyenne automatique avec `get_average_rating()` 
+- **Interface Admin**: `ProductRatingAdmin` 
 - **Affichage**: Étoiles dans le catalogue
 
 ### 🚚 Auto-Livraison Automatique
-- **Logique**: Commandes CONFIRMED → SHIPPED après 1 heure
+- **Logique**: Commandes CONFIRMED → SHIPPED après 30 minutes
 - **Champ**: `auto_shipped_at` sur le modèle Order
-- **Déclencheur**: Automatique dans `OrderViewSet.list()`
+- **Déclencheur**: Commande management `auto_update_order_status`
 - **Simulation**: Pour démonstration du workflow
 
 ### 🏷️ Filtrage par Catégorie
@@ -52,36 +53,27 @@
 - **Page Accueil**: Grille Bento avec liens vers catégories
 - **Images**: Mapping correct des images statiques
 
-### 📊 Page Statistiques
-- **Corrections**: Variables template alignées (`orders_count`, `total_revenue`, `stats`)
-- **Affichage**: Nombre de commandes, revenu total, statistiques par statut
+### 📋 Formulaire Checkout Complet
+- **🧍‍♂️ Informations utilisateur**: Téléphone ⭐, Email (optionnel)
+- **📍 Adresse**: Ville ⭐, Commune (optionnel), Adresse détaillée ⭐, Code postal (optionnel)
+- **🚚 Livraison**: Domicile (défaut), Point relais (optionnel)
 
 ### 🛠️ Commandes de Peuplement Base de Données
-- **`add_products`**: 16 produits de test avec catégories
+- **`seed_demo.py`**: 60+ produits avec catégories étendues
 - **`add_ratings`**: 15 notations utilisateur (1-5 étoiles)
 - **`add_recommendations`**: 12 recommandations utilisateur
+- **`create_specific_categories`**: Catégories spécifiques et produits
+- **`auto_update_order_status`**: Auto-livraison automatique
 
 ### 🔧 Interfaces d'Administration
 - **ProductLikeAdmin**: Gestion des likes utilisateur
 - **ProductRecommendationAdmin**: Gestion des recommandations
 - **ProductRatingAdmin**: Gestion des notations
-- **Correction Formulaire**: Champ rating retiré du formulaire produit
-
-### 🎨 Améliorations Frontend
-- **Catalogue**: Boutons de filtrage rapide par catégorie
-- **Accueil**: Grille Bento dynamique avec catégories
-- **Images Catégories**: Mapping correct (tests.png, masks.png, gloves.png, cons.png, bebe.png)
-
-### 📈 Compteurs et Métriques
-- **Likes**: Nombre total de likes par produit
-- **Recommandations**: Nombre total de recommandations par produit
-- **Notations**: Moyenne des étoiles par produit
-- **Affichage**: Dans les cartes produit du catalogue
+- **OrderAdmin**: Gestion complète des commandes
 
 ### 🔄 Migrations Base de Données
-- **0004**: Ajout modèle ProductLike
-- **0005**: Ajout modèle ProductRecommendation
-- **0006**: Ajout modèle ProductRating + auto_shipped_at sur Order
+- **0007**: Ajout champs Order + ProductRating
+- **0008**: Ajout ProductRecommendation + compteurs Product
 
 ---
 
@@ -395,7 +387,12 @@ VALUES (
         │     "name": "Paracétamol",    │
         │     "price": 5.99,            │
         │     "stock": 10,  ← IMPORTANT │
-        │     "sku": "PARA-500-001"     │
+        │     "sku": "PARA-500-001",    │
+        │     "user_likes": 5,           │← LIKES
+        │     "average_rating": 4.5,     │← RATING
+        │     "user_recommendations": 3, │← RECOMMENDATIONS
+        │     "is_liked_by_user": false,│← USER STATUS
+        │     "is_recommended_by_user": true│
         │   },                          │
         │   { ... }                     │
         │ ]                             │
@@ -409,6 +406,9 @@ VALUES (
      │  │ Paracétamol 500mg          │  │
      │  │ Prix: 5.99€                │  │
      │  │ Stock: ✅ 10 disponibles   │  │
+     │  │ ⭐ 4.5 (15 notes)          │  │← RATING
+     │  │ ❤️ 5 likes                 │  │← LIKES
+     │  │ 🎯 3 recommandations      │  │← RECOMMENDATIONS
      │  │                            │  │
      │  │ [Ajouter au Panier] ← Click│  │
      │  └────────────────────────────┘  │
@@ -497,7 +497,14 @@ User Clique "Valider la Commande"
               "product_id": 2,
               "quantity": 1
             }
-          ]
+          ],
+          "phone": "0123456789",
+          "email": "test@example.com",
+          "city": "Alger",
+          "commune": "El Harrach",
+          "detailed_address": "123 Rue de la Liberté",
+          "postal_code": "16000",
+          "delivery_method": "domicile"
         }
                     │
                     ↓
@@ -574,6 +581,13 @@ User Clique "Valider la Commande"
     │   subtotal = 9.98,               │
     │   discount_percent = 5,          │
     │   total = 9.48,                  │
+    │   phone = "0123456789",         │← NEW
+    │   email = "test@example.com",    │← NEW
+    │   city = "Alger",                 │← NEW
+    │   commune = "El Harrach",         │← NEW
+    │   detailed_address = "123 Rue...",│← NEW
+    │   postal_code = "16000",         │← NEW
+    │   delivery_method = "domicile",  │← NEW
     │   created_at = NOW()             │
     │ ) RETURNING id;                  │
     │                                  │
@@ -588,6 +602,7 @@ User Clique "Valider la Commande"
     - Order créé
     - Stock décrémenté
     - Remises appliquées
+    - Informations complètes enregistrées
                     │
                     ↓
     Publier Message RabbitMQ:
@@ -610,6 +625,8 @@ User Clique "Valider la Commande"
     │   "id": 42,                      │
     │   "status": "PENDING",           │
     │   "total": 9.48,                 │
+    │   "phone": "0123456789",         │
+    │   "city": "Alger",               │
     │   "lines": [                     │
     │     {"product_id": 1, "qty": 1}, │
     │     {"product_id": 2, "qty": 1}  │
@@ -694,7 +711,8 @@ USER:
   1. S'inscrit: john@example.com / MyPass123
   2. Se connecte
   3. Ajoute au panier: 3x Paracétamol, 2x Ibuprofène
-  4. Valide commande
+  4. Remplit formulaire checkout complet
+  5. Valide commande
 
 VÉRIFICATIONS:
   ✅ Paracétamol: 10 >= 3 ? OUI
@@ -707,6 +725,7 @@ RÉSULTATS:
   ✅ Total: (5.99 * 3) + (3.99 * 2) = 17.97€
   ✅ Remise 5%: 17.97 * 0.95 = 17.07€
   ✅ Email de confirmation envoyé
+  ✅ Informations livraison enregistrées
 
 BASE DE DONNÉES APRÈS:
   Table: catalog_product
@@ -718,11 +737,11 @@ BASE DE DONNÉES APRÈS:
   └────────────────────┘
 
   Table: catalog_order
-  ┌──────────────────────────────┐
-  │ ID │ user_id │ total │ status│
-  ├──────────────────────────────┤
-  │ 42 │ 1       │ 17.07 │PENDING
-  └──────────────────────────────┘
+  ┌──────────────────────────────────────────────────────────┐
+  │ ID │ user_id │ total │ status │ phone      │ city     │
+  ├──────────────────────────────────────────────────────────┤
+  │ 42 │ 1       │ 17.07 │PENDING │0123456789 │ Alger    │
+  └──────────────────────────────────────────────────────────┘
 ```
 
 ### Exemple 2: Achat Échoué (Stock Insuffisant)
@@ -781,7 +800,7 @@ RÉSULTAT:
 
 ---
 
-## ✅ Résumé d'Garanties
+## ✅ Résumé des Garanties
 
 | Aspect | Garantie | Preuve |
 |--------|----------|--------|
@@ -791,6 +810,8 @@ RÉSULTAT:
 | **Concurrence** | Pas de race condition | `select_for_update()` |
 | **Notification** | Event-driven | RabbitMQ message |
 | **Audit** | Traçabilité complète | Order history + Stock logs |
+| **Sécurité** | JWT Token validation | Bearer token required |
+| **Données** | Informations complètes | Formulaire checkout étendu |
 
 ---
 
@@ -806,21 +827,111 @@ RÉSULTAT:
 │     └─ JWT Token généré (avec role)               │
 │                                                     │
 │  2. SHOPPING                                       │
-│     └─ Voir produits + staff (décrémenté)        │
+│     └─ Voir produits + stock (décrémenté)         │
 │     └─ Ajouter/modifier panier (session)         │
+│     └─ Likes, Ratings, Recommandations           │
 │                                                     │
 │  3. ACHAT                                          │
 │     └─ Vérifier stock AVANT de décrémenter       │
 │     └─ Décrémenter stock atomiquement             │
 │     └─ Créer order & orderlines                   │
 │     └─ Tout-ou-rien: transaction.atomic           │
+│     └─ Formulaire checkout complet                 │
 │                                                     │
 │  4. NOTIFICATION                                   │
 │     └─ RabbitMQ message envoyé                    │
 │     └─ Worker notification traite                 │
 │     └─ Email envoyé au client                     │
 │                                                     │
+│  5. AUTO-LIVRAISON                                 │
+│     └─ PENDING → CONFIRMED → SHIPPED → DELIVERED  │
+│     └─ Auto-update toutes les 5 minutes           │
+│                                                     │
 └─────────────────────────────────────────────────────┘
 ```
 
-**🎉 Système production-ready!**
+---
+
+## 🚀 DÉPLOIEMENT
+
+### Commandes Essentielles
+
+```bash
+# 1. Migration
+docker compose exec catalog-api python manage.py migrate
+
+# 2. Peuplement base de données
+docker compose exec catalog-api python manage.py seed_demo --reset
+docker compose exec catalog-api python manage.py add_ratings
+docker compose exec catalog-api python manage.py add_recommendations
+
+# 3. Auto-livraison (toutes les 5 minutes)
+docker compose exec catalog-api python manage.py auto_update_order_status
+
+# 4. Tests complets
+python test_complete_guide.py
+```
+
+### Vérification
+
+```bash
+# Vérifier tous les modèles
+docker compose exec catalog-api python manage.py shell
+>>> from apps.catalog.models import *
+>>> Product.objects.count()
+>>> Order.objects.count()
+>>> ProductRating.objects.count()
+>>> ProductLike.objects.count()
+>>> ProductRecommendation.objects.count()
+```
+
+**🎉 SYSTÈME PRODUCTION-READY!**
+
+---
+
+## 📚 Documentation Technique
+
+### API Endpoints
+
+| Endpoint | Méthode | Description |
+|----------|---------|-------------|
+| `/api/products/` | GET | Lister produits avec likes/ratings |
+| `/api/products/{id}/like/` | POST | Like/Unlike (toggle) |
+| `/api/products/{id}/rate/` | POST | Noter (1-5 étoiles) |
+| `/api/products/{id}/unrate/` | POST | Supprimer note |
+| `/api/products/{id}/recommend/` | POST | Recommander/Retirer |
+| `/api/products/{id}/ai_recommend/` | POST | Recommandations IA |
+| `/api/orders/` | POST | Créer commande |
+| `/api/categories/` | GET | Lister catégories |
+
+### Modèles de Données
+
+```python
+# Product
+{
+    "id": 1,
+    "name": "Paracétamol 500mg",
+    "price": "5.99",
+    "stock": 10,
+    "user_likes": 5,
+    "average_rating": 4.5,
+    "user_recommendations": 3,
+    "is_liked_by_user": false,
+    "is_recommended_by_user": true
+}
+
+# Order
+{
+    "id": 42,
+    "status": "PENDING",
+    "total": "17.07",
+    "phone": "0123456789",
+    "city": "Alger",
+    "detailed_address": "123 Rue de la Liberté",
+    "delivery_method": "domicile"
+}
+```
+
+---
+
+**✅ GUIDE COMPLET IMPLEMENTÉ ET FONCTIONNEL!**

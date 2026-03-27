@@ -5,7 +5,7 @@ from django.db.models import F
 from rest_framework import serializers
 
 from .discounts import apply_discount
-from .models import Category, Order, OrderLine, Patient, Product, ProductRating, ProductLike
+from .models import Category, Order, OrderLine, Patient, Product, ProductRating, ProductLike, ProductRecommendation
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -21,6 +21,8 @@ class ProductSerializer(serializers.ModelSerializer):
     average_rating = serializers.SerializerMethodField()
     rating_count = serializers.SerializerMethodField()
     user_rating = serializers.SerializerMethodField()
+    is_recommended_by_user = serializers.SerializerMethodField()
+    user_recommendations = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -40,6 +42,8 @@ class ProductSerializer(serializers.ModelSerializer):
             "average_rating",
             "rating_count",
             "user_rating",
+            "is_recommended_by_user",
+            "user_recommendations",
         )
     
     def get_is_liked_by_user(self, obj):
@@ -66,6 +70,15 @@ class ProductSerializer(serializers.ModelSerializer):
             rating = ProductRating.objects.filter(user=request.user, product=obj).first()
             return rating.rating if rating else None
         return None
+    
+    def get_is_recommended_by_user(self, obj):
+        request = self.context.get('request')
+        if request and hasattr(request, 'user') and request.user.is_authenticated:
+            return ProductRecommendation.objects.filter(user=request.user, product=obj).exists()
+        return False
+    
+    def get_user_recommendations(self, obj):
+        return ProductRecommendation.objects.filter(product=obj).count()
 
 
 class PatientSerializer(serializers.ModelSerializer):
@@ -208,3 +221,11 @@ class ProductRatingCreateSerializer(serializers.ModelSerializer):
         if value < 1 or value > 5:
             raise serializers.ValidationError("La note doit être entre 1 et 5.")
         return value
+
+
+class ProductRecommendationSerializer(serializers.ModelSerializer):
+    """Serializer for product recommendations"""
+    class Meta:
+        model = ProductRecommendation
+        fields = ('id', 'user', 'product', 'created_at')
+        read_only_fields = ('id', 'user', 'product', 'created_at')

@@ -26,12 +26,24 @@ class Product(models.Model):
     stock = models.PositiveIntegerField(default=0)
     sku = models.CharField(max_length=64, unique=True)
     expiration_date = models.DateField(null=True, blank=True)
+    
+    # Compteurs pour likes et recommandations
+    user_likes = models.PositiveIntegerField(default=0)
+    user_recommendations = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ["name"]
-
+    
     def __str__(self):
         return self.name
+    
+    def get_average_rating(self):
+        """Calculer la moyenne des notes"""
+        from .models import ProductRating
+        ratings = ProductRating.objects.filter(product=self)
+        if ratings.exists():
+            return sum(r.rating for r in ratings) / len(ratings)
+        return 0
 
 
 class Patient(models.Model):
@@ -108,3 +120,18 @@ class ProductRating(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.product.name} - {self.rating}/5"
+
+
+class ProductRecommendation(models.Model):
+    """Product recommendation system - user can recommend once"""
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'product'], name='unique_user_product_recommendation')
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} recommends {self.product.name}"

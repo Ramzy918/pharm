@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Category, Order, OrderLine, Patient, Product
+from .models import Category, Order, OrderLine, Patient, Product, ProductLike, ProductRating, ProductRecommendation
 
 
 class OrderLineInline(admin.TabularInline):
@@ -33,3 +33,27 @@ class OrderAdmin(admin.ModelAdmin):
     list_display = ("id", "auth_user_id", "status", "total", "created_at")
     list_filter = ("status",)
     inlines = [OrderLineInline]
+
+
+@admin.register(ProductLike)
+class ProductLikeAdmin(admin.ModelAdmin):
+    list_display = ("user", "product", "created_at")
+    list_filter = ("created_at", "product")
+    search_fields = ("user__email", "product__name")
+    readonly_fields = ("created_at",)
+
+
+@admin.register(ProductRating)
+class ProductRatingAdmin(admin.ModelAdmin):
+    list_display = ("user", "product", "rating", "created_at")
+    list_filter = ("rating", "created_at", "product")
+    search_fields = ("user__email", "product__name")
+    readonly_fields = ("created_at",)
+
+
+@admin.register(ProductRecommendation)
+class ProductRecommendationAdmin(admin.ModelAdmin):
+    list_display = ("user", "product", "created_at")
+    list_filter = ("created_at", "product")
+    search_fields = ("user__email", "product__name")
+    readonly_fields = ("created_at",)
