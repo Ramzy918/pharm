@@ -5,7 +5,7 @@ from django.db.models import F
 from rest_framework import serializers
 
 from .discounts import apply_discount
-from .models import Category, Order, OrderLine, Patient, Product
+from .models import Category, Order, OrderLine, Patient, Product, ProductRating, ProductLike
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -16,6 +16,11 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source="category.name", read_only=True)
+    is_liked_by_user = serializers.SerializerMethodField()
+    user_likes = serializers.SerializerMethodField()
+    average_rating = serializers.SerializerMethodField()
+    rating_count = serializers.SerializerMethodField()
+    user_rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -30,7 +35,37 @@ class ProductSerializer(serializers.ModelSerializer):
             "stock",
             "sku",
             "expiration_date",
+            "is_liked_by_user",
+            "user_likes",
+            "average_rating",
+            "rating_count",
+            "user_rating",
         )
+    
+    def get_is_liked_by_user(self, obj):
+        request = self.context.get('request')
+        if request and hasattr(request, 'user') and request.user.is_authenticated:
+            return ProductLike.objects.filter(user=request.user, product=obj).exists()
+        return False
+    
+    def get_user_likes(self, obj):
+        return ProductLike.objects.filter(product=obj).count()
+    
+    def get_average_rating(self, obj):
+        ratings = ProductRating.objects.filter(product=obj)
+        if ratings.exists():
+            return sum(r.rating for r in ratings) / len(ratings)
+        return 0
+    
+    def get_rating_count(self, obj):
+        return ProductRating.objects.filter(product=obj).count()
+    
+    def get_user_rating(self, obj):
+        request = self.context.get('request')
+        if request and hasattr(request, 'user') and request.user.is_authenticated:
+            rating = ProductRating.objects.filter(user=request.user, product=obj).first()
+            return rating.rating if rating else None
+        return None
 
 
 class PatientSerializer(serializers.ModelSerializer):
@@ -79,8 +114,16 @@ class OrderSerializer(serializers.ModelSerializer):
             "total",
             "created_at",
             "lines",
+            "phone",
+            "email",
+            "city",
+            "commune",
+            "detailed_address",
+            "postal_code",
+            "delivery_method",
+            "auto_shipped_at",
         )
-        read_only_fields = ("id", "auth_user_id", "status", "subtotal", "discount_percent", "total", "created_at", "lines")
+        read_only_fields = ("id", "auth_user_id", "status", "subtotal", "discount_percent", "total", "created_at", "lines", "auto_shipped_at")
 
 
 class OrderStatusSerializer(serializers.ModelSerializer):
@@ -91,6 +134,13 @@ class OrderStatusSerializer(serializers.ModelSerializer):
 
 class OrderCreateSerializer(serializers.Serializer):
     lines = OrderLineWriteSerializer(many=True)
+    phone = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    email = serializers.EmailField(required=False, allow_blank=True)
+    city = serializers.CharField(max_length=120, required=False, allow_blank=True)
+    commune = serializers.CharField(max_length=120, required=False, allow_blank=True)
+    detailed_address = serializers.CharField(required=False, allow_blank=True)
+    postal_code = serializers.CharField(max_length=16, required=False, allow_blank=True)
+    delivery_method = serializers.CharField(max_length=20, required=False, default='domicile')
 
     def validate_lines(self, value):
         if not value:
@@ -101,13 +151,27 @@ class OrderCreateSerializer(serializers.Serializer):
     def create(self, validated_data):
         user = self.context["request"].user
         raw_lines = validated_data["lines"]
+        
+        # Extract order fields
+        order_fields = {
+            'phone': validated_data.get('phone', ''),
+            'email': validated_data.get('email', ''),
+            'city': validated_data.get('city', ''),
+            'commune': validated_data.get('commune', ''),
+            'detailed_address': validated_data.get('detailed_address', ''),
+            'postal_code': validated_data.get('postal_code', ''),
+            'delivery_method': validated_data.get('delivery_method', 'domicile'),
+        }
+        
         order = Order.objects.create(
             auth_user_id=user.id,
             status=Order.Status.PENDING,
             subtotal=Decimal("0.00"),
             discount_percent=0,
             total=Decimal("0.00"),
+            **order_fields
         )
+        
         subtotal = Decimal("0.00")
         for item in raw_lines:
             product = item["product"]
@@ -124,3 +188,23 @@ class OrderCreateSerializer(serializers.Serializer):
         order.total = total
         order.save()
         return order
+
+
+class ProductRatingSerializer(serializers.ModelSerializer):
+    """Serializer for product ratings"""
+    class Meta:
+        model = ProductRating
+        fields = ('id', 'rating', 'comment', 'created_at')
+        read_only_fields = ('id', 'created_at')
+
+
+class ProductRatingCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating/updating product ratings"""
+    class Meta:
+        model = ProductRating
+        fields = ('rating', 'comment')
+    
+    def validate_rating(self, value):
+        if value < 1 or value > 5:
+            raise serializers.ValidationError("La note doit être entre 1 et 5.")
+        return value

@@ -56,6 +56,7 @@ class Order(models.Model):
         PENDING = "PENDING", "En attente"
         CONFIRMED = "CONFIRMED", "Confirmée"
         SHIPPED = "SHIPPED", "Expédiée"
+        DELIVERED = "DELIVERED", "Livrée"
         CANCELLED = "CANCELLED", "Annulée"
 
     auth_user_id = models.PositiveIntegerField(db_index=True)
@@ -64,6 +65,22 @@ class Order(models.Model):
     discount_percent = models.PositiveSmallIntegerField(default=0)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    # User information
+    phone = models.CharField(max_length=20, blank=True, default='')
+    email = models.EmailField(max_length=254, blank=True, default='')
+    
+    # Address information
+    city = models.CharField(max_length=120, blank=True, default='')
+    commune = models.CharField(max_length=120, blank=True, default='')
+    detailed_address = models.TextField(blank=True, default='')
+    postal_code = models.CharField(max_length=16, blank=True, default='')
+    
+    # Delivery method
+    delivery_method = models.CharField(max_length=20, blank=True, default='domicile')
+    
+    # Auto-shipping
+    auto_shipped_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["-created_at"]
@@ -74,3 +91,20 @@ class OrderLine(models.Model):
     product = models.ForeignKey(Product, on_delete=models.PROTECT)
     quantity = models.PositiveIntegerField(validators=[MinValueValidator(1)])
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+
+
+class ProductRating(models.Model):
+    """Simple rating system - user can rate product once and delete rating"""
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    rating = models.IntegerField(choices=[(1, '1'), (2, '2'), (3, '3'), (4, '4'), (5, '5')])
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'product'], name='unique_user_product_rating')
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.product.name} - {self.rating}/5"

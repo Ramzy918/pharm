@@ -7,31 +7,123 @@
     <h2><i class="fas fa-shopping-cart"></i> Informations de livraison</h2>
 </div>
 
-<div style="max-width: 600px; margin: 0 auto;">
+<div style="max-width: 800px; margin: 0 auto;">
     <form method="post" class="glass-card" style="padding: 2rem;">
         {% csrf_token %}
         
-        <div style="margin-bottom: 1.5rem;">
-            <label for="shipping_address" style="display: block; margin-bottom: 0.5rem; color: var(--text-muted);">Adresse complète</label>
-            <textarea name="shipping_address" id="shipping_address" rows="3" class="glass-card" style="width: 100%; padding: 0.8rem; background: var(--bg-hover); color: var(--text-main); border: 1px solid var(--border);" required placeholder="Ex: 123 Rue de la Liberté"></textarea>
+        <!-- 🧍‍♂️ 1. Informations utilisateur -->
+        <div style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem; color: var(--primary);">
+                <i class="fas fa-user"></i> Informations utilisateur
+            </h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label for="phone" style="display: block; margin-bottom: 0.5rem; color: var(--text-muted);">
+                        Téléphone ⭐
+                    </label>
+                    <input type="tel" name="phone" id="phone" class="glass-card" 
+                           style="width: 100%; padding: 0.8rem; background: var(--bg-hover); color: var(--text-main); border: 1px solid var(--border);" 
+                           required placeholder="05XXXXXXXX">
+                </div>
+                <div>
+                    <label for="email" style="display: block; margin-bottom: 0.5rem; color: var(--text-muted);">
+                        Email (optionnel)
+                    </label>
+                    <input type="email" name="email" id="email" class="glass-card" 
+                           style="width: 100%; padding: 0.8rem; background: var(--bg-hover); color: var(--text-main); border: 1px solid var(--border);" 
+                           placeholder="email@example.com">
+                </div>
+            </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-            <div>
-                <label for="shipping_city" style="display: block; margin-bottom: 0.5rem; color: var(--text-muted);">Ville</label>
-                <input type="text" name="shipping_city" id="shipping_city" class="glass-card" style="width: 100%; padding: 0.8rem; background: var(--bg-hover); color: var(--text-main); border: 1px solid var(--border);" required placeholder="Alger">
+        <!-- 📍 2. Adresse -->
+        <div style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem; color: var(--primary);">
+                <i class="fas fa-map-marker-alt"></i> Adresse de livraison
+            </h3>
+            
+            <div style="margin-bottom: 1rem;">
+                <label for="city" style="display: block; margin-bottom: 0.5rem; color: var(--text-muted);">
+                    Ville ⭐
+                </label>
+                <input type="text" name="city" id="city" class="glass-card" 
+                       style="width: 100%; padding: 0.8rem; background: var(--bg-hover); color: var(--text-main); border: 1px solid var(--border);" 
+                       required placeholder="Alger">
             </div>
-            <div>
-                <label for="shipping_phone" style="display: block; margin-bottom: 0.5rem; color: var(--text-muted);">Numéro de téléphone</label>
-                <input type="text" name="shipping_phone" id="shipping_phone" class="glass-card" style="width: 100%; padding: 0.8rem; background: var(--bg-hover); color: var(--text-main); border: 1px solid var(--border);" required placeholder="05XXXXXXXX">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label for="commune" style="display: block; margin-bottom: 0.5rem; color: var(--text-muted);">
+                        Commune (optionnel)
+                    </label>
+                    <input type="text" name="commune" id="commune" class="glass-card" 
+                           style="width: 100%; padding: 0.8rem; background: var(--bg-hover); color: var(--text-main); border: 1px solid var(--border);" 
+                           placeholder="El Harrach">
+                </div>
+                <div>
+                    <label for="postal_code" style="display: block; margin-bottom: 0.5rem; color: var(--text-muted);">
+                        Code postal (optionnel)
+                    </label>
+                    <input type="text" name="postal_code" id="postal_code" class="glass-card" 
+                           style="width: 100%; padding: 0.8rem; background: var(--bg-hover); color: var(--text-main); border: 1px solid var(--border);" 
+                           placeholder="16000">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label for="detailed_address" style="display: block; margin-bottom: 0.5rem; color: var(--text-muted);">
+                    Adresse détaillée ⭐
+                </label>
+                <textarea name="detailed_address" id="detailed_address" rows="3" class="glass-card" 
+                          style="width: 100%; padding: 0.8rem; background: var(--bg-hover); color: var(--text-main); border: 1px solid var(--border);" 
+                          required placeholder="Ex: 123 Rue de la Liberté, Immeuble A, Appartement 4"></textarea>
             </div>
         </div>
 
-        <div style="background: var(--bg-hover); padding: 1rem; border-radius: 12px; margin-bottom: 2rem;">
-            <h4 style="margin: 0 0 0.5rem 0;">Récapitulatif</h4>
-            <div style="display: flex; justify-content: space-between;">
-                <span>Total à payer</span>
-                <strong style="font-size: 1.2rem; color: var(--primary);">{{ cart_total }} DA</strong>
+        <!-- 🚚 3. Méthode de livraison -->
+        <div style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem; color: var(--primary);">
+                <i class="fas fa-truck"></i> Méthode de livraison
+            </h3>
+            
+            <div style="display: flex; gap: 1rem;">
+                <label style="flex: 1; padding: 1rem; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; background: var(--bg-hover);">
+                    <input type="radio" name="delivery_method" value="domicile" checked style="margin-right: 0.5rem;">
+                    <strong>Livraison à domicile</strong>
+                    <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem;">
+                        Livraison dans les 24-48h
+                    </div>
+                </label>
+                
+                <label style="flex: 1; padding: 1rem; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; background: var(--bg-hover);">
+                    <input type="radio" name="delivery_method" value="point_relais" style="margin-right: 0.5rem;">
+                    <strong>Point relais</strong>
+                    <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem;">
+                        Retrait dans un point relais
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Récapitulatif -->
+        <div style="background: var(--bg-hover); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+            <h4 style="margin: 0 0 1rem 0;">
+                <i class="fas fa-receipt"></i> Récapitulatif de la commande
+            </h4>
+            
+            {% if cart_items %}
+                {% for item in cart_items %}
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">
+                    <span>{{ item.product.name }} x {{ item.quantity }}</span>
+                    <span>{{ item.total_price }} DA</span>
+                </div>
+                {% endfor %}
+            {% endif %}
+            
+            <div style="display: flex; justify-content: space-between; margin-top: 1rem; padding-top: 1rem; border-top: 2px solid var(--primary);">
+                <span style="font-size: 1.1rem; font-weight: bold;">Total à payer</span>
+                <strong style="font-size: 1.3rem; color: var(--primary);">{{ cart_total }} DA</strong>
             </div>
         </div>
 
@@ -40,4 +132,40 @@
         </button>
     </form>
 </div>
+
+<script>
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const phone = document.getElementById('phone').value;
+    const city = document.getElementById('city').value;
+    const detailedAddress = document.getElementById('detailed_address').value;
+    
+    if (!phone || !city || !detailedAddress) {
+        e.preventDefault();
+        alert('Veuillez remplir tous les champs obligatoires (marqués ⭐)');
+        return false;
+    }
+    
+    // Simple phone validation
+    const phoneRegex = /^(0[5-7][0-9]{8})$/;
+    if (!phoneRegex.test(phone.replace(/\s/g, ''))) {
+        e.preventDefault();
+        alert('Veuillez entrer un numéro de téléphone valide (format: 05XXXXXXXX)');
+        return false;
+    }
+});
+
+// Delivery method selection
+document.querySelectorAll('input[name="delivery_method"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.querySelectorAll('label').forEach(label => {
+            label.style.borderColor = 'var(--border)';
+            label.style.background = 'var(--bg-hover)';
+        });
+        
+        this.closest('label').style.borderColor = 'var(--primary)';
+        this.closest('label').style.background = 'var(--bg-primary)';
+    });
+});
+</script>
 {% endblock %}

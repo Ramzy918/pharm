@@ -72,34 +72,39 @@
 
 <!-- Catégories Bento Grid -->
 <section style="margin-top: 4rem;">
+  <div class="section-head">
+    <h2><i class="fas fa-th-large"></i> Nos Catégories</h2>
+    <p>Trouvez exactement ce dont vous avez besoin</p>
+  </div>
+  
   <div class="bento-grid">
-    <a href="{% url 'catalog' %}?category=" class="bento-card bento-tests">
+    <a href="{% url 'catalog' %}?category=tests" class="bento-card bento-tests">
       <h3>Tests</h3>
-      <p>Voir les produits <span>›</span></p>
+      <p>Dépistage et diagnostics <span>›</span></p>
       <img src="{% static 'shop/img/tests.png' %}" alt="Tests rapides" class="bento-img">
     </a>
 
-    <a href="{% url 'catalog' %}?category=" class="bento-card bento-masques">
+    <a href="{% url 'catalog' %}?category=masques" class="bento-card bento-masques">
       <h3>Masques</h3>
-      <p>Voir les produits <span>›</span></p>
+      <p>Protection et sécurité <span>›</span></p>
       <img src="{% static 'shop/img/masks.png' %}" alt="Masques" class="bento-img">
     </a>
 
-    <a href="{% url 'catalog' %}?category=" class="bento-card bento-gants">
+    <a href="{% url 'catalog' %}?category=gants" class="bento-card bento-gants">
       <h3>Gants</h3>
-      <p>Voir les produits <span>›</span></p>
+      <p>Protection médicale <span>›</span></p>
       <img src="{% static 'shop/img/gloves.png' %}" alt="Gants" class="bento-img">
     </a>
 
-    <a href="{% url 'catalog' %}?category=" class="bento-card bento-consommables">
+    <a href="{% url 'catalog' %}?category=consommables" class="bento-card bento-consommables">
       <h3>Consommables</h3>
-      <p>Voir les produits <span>›</span></p>
+      <p>Matériel médical <span>›</span></p>
       <img src="{% static 'shop/img/cons.png' %}" alt="Consommables" class="bento-img">
     </a>
 
-    <a href="{% url 'catalog' %}?category=" class="bento-card bento-bebe">
+    <a href="{% url 'catalog' %}?category=bebe" class="bento-card bento-bebe">
       <h3>Bébé</h3>
-      <p>Voir les produits <span>›</span></p>
+      <p>Soin et nourriture <span>›</span></p>
       <img src="{% static 'shop/img/bebe.png' %}" alt="Bébé" class="bento-img">
     </a>
   </div>

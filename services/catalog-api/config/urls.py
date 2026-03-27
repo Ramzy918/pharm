@@ -2,7 +2,16 @@ from django.contrib import admin
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from apps.catalog.views import CategoryViewSet, OrderViewSet, PatientViewSet, ProductViewSet
+from apps.catalog.views import (
+    CategoryViewSet, 
+    OrderViewSet, 
+    PatientViewSet, 
+    ProductViewSet,
+    product_like_view,
+    product_rate_view,
+    product_unrate_view,
+    product_ratings_view
+)
 
 router = DefaultRouter()
 router.register(r"categories", CategoryViewSet, basename="category")
@@ -14,4 +23,9 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("health/", include("apps.core.urls")),
     path("api/", include(router.urls)),
+    # Rating and Like endpoints
+    path("api/products/<int:pk>/like/", product_like_view, name="product-like"),
+    path("api/products/<int:pk>/rate/", product_rate_view, name="product-rate"),
+    path("api/products/<int:pk>/unrate/", product_unrate_view, name="product-unrate"),
+    path("api/products/<int:pk>/ratings/", product_ratings_view, name="product-ratings"),
 ]
