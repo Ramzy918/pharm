@@ -12,6 +12,8 @@ class RoleTokenObtainPairSerializer(TokenObtainPairSerializer):
         token = super().get_token(user)
         token["role"] = user.role
         token["email"] = user.email
+        token["pharmacy_name"] = user.pharmacy_name
+        token["wilaya"] = user.wilaya
         return token
 
 
@@ -26,9 +28,13 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
 
 
-class MeView(generics.RetrieveAPIView):
-    serializer_class = UserSerializer
+class MeView(generics.RetrieveUpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.request.method in ("PUT", "PATCH"):
+            return UserWriteSerializer
+        return UserSerializer
 
     def get_object(self):
         return self.request.user

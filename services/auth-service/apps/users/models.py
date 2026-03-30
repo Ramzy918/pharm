@@ -36,6 +36,10 @@ class User(AbstractUser):
 
     email = models.EmailField("adresse e-mail", unique=True)
     role = models.CharField(max_length=32, choices=Role.choices, default=Role.PRO)
+    
+    # Nouveaux champs pour la Marketplace
+    pharmacy_name = models.CharField(max_length=255, blank=True, null=True)
+    wilaya = models.CharField(max_length=100, blank=True, null=True)
 
     objects = UserManager()
 

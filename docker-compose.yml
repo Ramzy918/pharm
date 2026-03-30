@@ -74,6 +74,8 @@ services:
     depends_on:
       - postgres-auth
       - consul
+    volumes:
+      - ./services/auth-service:/app
     networks:
       - pharm
     labels:
@@ -121,6 +123,8 @@ services:
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
+    volumes:
+      - ./services/notification-worker:/app
     depends_on:
       - rabbitmq
     networks:

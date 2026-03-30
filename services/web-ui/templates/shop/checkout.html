@@ -171,6 +171,21 @@
                 <i class="fas fa-receipt"></i> Récapitulatif de la commande
             </h4>
             
+            {% if original_suggestions %}
+            <div style="background: rgba(255, 193, 7, 0.1); border-left: 4px solid #ffc107; padding: 1rem; margin-bottom: 1.5rem; border-radius: 8px;">
+                <h5 style="margin: 0; color: #856404;"><i class="fas fa-exclamation-triangle"></i> Rappel de proximité</h5>
+                <p style="margin: 0.5rem 0; font-size: 0.85rem; color: #856404;">Certains articles sont loin. Vous pouvez toujours changer pour une pharmacie à <strong>{{ user_wilaya }}</strong> :</p>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    {% for s in original_suggestions %}
+                    <div style="font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+                        <span>{{ s.original_name }} chez {{ s.pharmacy_name }} ({{ s.wilaya }})</span>
+                        <a href="{% url 'cart_remove' s.original_id %}?next={% url 'cart_add' s.alt_id %}" style="color: #007bff; text-decoration: none; font-weight: bold;">Remplacer</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
             {% if cart_items %}
                 {% for item in cart_items %}
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">

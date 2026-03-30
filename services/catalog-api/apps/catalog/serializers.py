@@ -47,6 +47,8 @@ class ProductSerializer(serializers.ModelSerializer):
             "user_recommendations",
             "auth_user_id",
             "image",
+            "pharmacy_name",
+            "pharmacy_wilaya",
         )
         read_only_fields = ("id", "auth_user_id")
     

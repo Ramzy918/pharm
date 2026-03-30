@@ -31,7 +31,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     permission_classes = [IsAdminOrPharmacyOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
-    filterset_fields = ("category", "category__slug", "slug")
+    filterset_fields = ("category", "category__slug", "slug", "pharmacy_wilaya")
     search_fields = ("name", "summary", "sku", "category__name")
     ordering_fields = ("name", "price", "stock", "expiration_date")
     ordering = ("name",)
@@ -43,12 +43,17 @@ class ProductViewSet(viewsets.ModelViewSet):
         return qs.order_by("name")
 
     def perform_create(self, serializer):
-        user = self.request.user
-        role = self.request.auth.get("role") if self.request.auth else getattr(user, "role", None)
-        if role == "PHARMACY":
-            serializer.save(auth_user_id=user.id)
-        else:
-            serializer.save()
+        user_id = self.request.user.id
+        # Extract extra info from token if available
+        token = self.request.auth
+        pharm_name = token.get("pharmacy_name") if token else None
+        pharm_wilaya = token.get("wilaya") if token else None
+        
+        serializer.save(
+            auth_user_id=user_id,
+            pharmacy_name=pharm_name,
+            pharmacy_wilaya=pharm_wilaya
+        )
 
 
 class PatientViewSet(viewsets.ModelViewSet):
@@ -91,7 +96,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         order = serializer.save()
 
         def _pub():
-            publish_order_created(order_id=order.pk, user_id=order.auth_user_id, total=order.total)
+            publish_order_created(order_id=order.pk, user_id=order.auth_user_id, email=order.email, total=order.total)
 
         transaction.on_commit(_pub)
 

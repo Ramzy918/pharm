@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Mon Profil — MarketPharm{% endblock %}
+
+{% block content %}
+<div class="section-head">
+    <h2><i class="fas fa-user-circle"></i> Paramètres de Mon Profil</h2>
+</div>
+
+<div style="max-width: 600px; margin: 0 auto;">
+    <form method="post" class="glass-card" style="padding: 2.5rem;">
+        {% csrf_token %}
+        
+        <p class="text-muted" style="margin-bottom: 2rem;">
+            Remplissez vos informations pour une meilleure expérience sur la plateforme, notamment pour les suggestions de pharmacies à proximité.
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted);">Prénom</label>
+                <input type="text" name="first_name" value="{{ user_profile.first_name|default:'' }}" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted);">Nom</label>
+                <input type="text" name="last_name" value="{{ user_profile.last_name|default:'' }}" class="form-input" required>
+            </div>
+        </div>
+
+        {% if user_profile.role == 'PHARMACY' %}
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted);">Nom de la Pharmacie</label>
+            <input type="text" name="pharmacy_name" value="{{ user_profile.pharmacy_name|default:'' }}" class="form-input" placeholder="Ex: Pharmacie Centrale">
+        </div>
+        {% endif %}
+
+        <div class="form-group" style="margin-bottom: 2rem;">
+            <label for="wilaya" style="display: block; margin-bottom: 0.5rem; color: var(--text-muted);">Ma Wilaya de Résidence ⭐</label>
+            <select name="wilaya" id="wilaya" class="form-input" required>
+                <option value="" {% if not user_profile.wilaya %}selected{% endif %} disabled>Choisissez votre Wilaya</option>
+                <option value="Adrar" {% if user_profile.wilaya == 'Adrar' %}selected{% endif %}>01 - Adrar</option>
+                <option value="Chlef" {% if user_profile.wilaya == 'Chlef' %}selected{% endif %}>02 - Chlef</option>
+                <option value="Laghouat" {% if user_profile.wilaya == 'Laghouat' %}selected{% endif %}>03 - Laghouat</option>
+                <option value="Alger" {% if user_profile.wilaya == 'Alger' %}selected{% endif %}>16 - Alger</option>
+                <option value="Oran" {% if user_profile.wilaya == 'Oran' %}selected{% endif %}>31 - Oran</option>
+                <option value="Constantine" {% if user_profile.wilaya == 'Constantine' %}selected{% endif %}>25 - Constantine</option>
+                <option value="Annaba" {% if user_profile.wilaya == 'Annaba' %}selected{% endif %}>23 - Annaba</option>
+                <option value="Setif" {% if user_profile.wilaya == 'Setif' %}selected{% endif %}>19 - Setif</option>
+                <option value="Blida" {% if user_profile.wilaya == 'Blida' %}selected{% endif %}>09 - Blida</option>
+                <option value="Tizi Ouzou" {% if user_profile.wilaya == 'Tizi Ouzou' %}selected{% endif %}>15 - Tizi Ouzou</option>
+                <option value="Ghardaia" {% if user_profile.wilaya == 'Ghardaia' %}selected{% endif %}>47 - Ghardaia</option>
+            </select>
+            <p style="font-size: 0.8rem; color: var(--primary); margin-top: 0.5rem;">
+                <i class="fas fa-info-circle"></i> Cette localisation sera utilisée pour vous suggérer les produits les plus proches de chez vous.
+            </p>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
+            <i class="fas fa-save"></i> Enregistrer les modifications
+        </button>
+    </form>
+
+    <div style="margin-top: 2rem; text-align: center;">
+        <span class="text-muted">Besoin d'aide ?</span> 
+        <a href="mailto:support@marketpharm.dz" style="color: var(--primary); text-decoration: none;">Contacter le support</a>
+    </div>
+</div>
+{% endblock %}

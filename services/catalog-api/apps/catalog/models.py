@@ -21,14 +21,16 @@ class Product(models.Model):
     category = models.ForeignKey(Category, related_name="products", on_delete=models.PROTECT)
     # Champs élargis pour imports CSV (ex. Kaggle) : noms longs, descriptions, codes CIP/ID variés
     name = models.CharField(max_length=500)
-    slug = models.SlugField(unique=True, max_length=200)
+    slug = models.SlugField(max_length=200, db_index=True)
     summary = models.TextField(blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))])
     stock = models.PositiveIntegerField(default=0)
-    sku = models.CharField(max_length=128, unique=True)
+    sku = models.CharField(max_length=128)
     expiration_date = models.DateField(null=True, blank=True)
-    auth_user_id = models.PositiveIntegerField(db_index=True, null=True, blank=True)
+    auth_user_id = models.IntegerField(null=True, blank=True)
     image_url = models.URLField(max_length=500, null=True, blank=True)
+    pharmacy_name = models.CharField(max_length=255, blank=True, null=True)
+    pharmacy_wilaya = models.CharField(max_length=100, blank=True, null=True)
     
     # Compteurs et flags
     rating = models.IntegerField(default=0)

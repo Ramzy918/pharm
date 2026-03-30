@@ -42,6 +42,7 @@
               <span style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);">{{ user_name|default:"Utilisateur Pro" }}</span>
               <span style="font-size: 0.75rem; color: var(--text-muted);">{{ user_id_display }}</span>
             </div>
+            <a href="{% url 'profile' %}" class="btn btn-outline" style="margin-left: 0.5rem; padding: 0.4rem 0.8rem; border-radius: 12px;" title="Mon Profil"><i class="fas fa-user-gear"></i></a>
             <a href="{% url 'logout' %}" class="btn btn-outline" style="margin-left: 0.5rem; padding: 0.4rem 0.8rem; border-radius: 12px;" title="{{ T.logout|default:'Déconnexion' }}"><i class="fas fa-arrow-right-from-bracket"></i></a>
           </div>
         {% else %}

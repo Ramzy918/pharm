@@ -8,6 +8,20 @@
 </div>
 
 {% if lines %}
+  {% if suggestions %}
+    <div class="glass-card" style="margin-bottom: 2rem; border-left: 4px solid var(--warning); padding: 1rem 1.5rem;">
+        <h4 style="margin: 0; color: var(--warning);"><i class="fas fa-location-dot"></i> Suggestion de proximité</h4>
+        <p style="margin: 0.5rem 0; font-size: 0.9rem;">Nous avons trouvé des pharmacies plus proches (dans votre wilaya : <strong>{{ user_wilaya }}</strong>) pour les produits de votre panier :</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 1rem;">
+            {% for s in suggestions %}
+                <div style="background: rgba(255,255,255,0.05); padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border); font-size: 0.85rem;">
+                    <span><strong>{{ s.original_name }}</strong> est disponible chez <strong>{{ s.pharmacy_name }}</strong> ({{ s.wilaya }})</span>
+                    <a href="{% url 'cart_remove' s.original_id %}?next={% url 'cart_add' s.alt_id %}" class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; margin-left: 0.5rem; border-color: var(--warning); color: var(--warning);">Remplacer</a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+  {% endif %}
   <div class="glass-card" style="padding: 2rem; margin-bottom: 2rem;">
     <table class="table" style="width: 100%; text-align: left; border-collapse: collapse;">
       <thead>
