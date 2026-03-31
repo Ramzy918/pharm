@@ -77,6 +77,13 @@
 
       <h3>{{ p.name }}</h3>
       <span class="product-cat">{{ p.category_name }}</span>
+      
+      <div style="margin: 0.5rem 0; font-size: 0.85rem; color: var(--primary); display: flex; align-items: center; gap: 0.4rem;">
+          <i class="fas fa-store-alt"></i>
+          <span>{{ p.pharmacy_name|default:"Pharmacie Partenaire" }}</span>
+          <span style="color: var(--text-muted);">({{ p.pharmacy_wilaya|default:"Algérie" }})</span>
+      </div>
+
       <p class="product-summary">{{ p.summary }}</p>
       
       <div style="margin-bottom: auto; display: flex; justify-content: space-between; align-items: center;">

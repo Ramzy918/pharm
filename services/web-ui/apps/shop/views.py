@@ -149,6 +149,8 @@ def signup_view(request):
                 password=password,
                 first_name=first_name,
                 role=request.POST.get("role", "PRO"),
+                pharmacy_name=request.POST.get("pharmacy_name"),
+                wilaya=request.POST.get("wilaya"),
             )
         except HTTPError as e:
             try:
@@ -285,6 +287,10 @@ def cart_add(request, product_id: int):
     cart[key] = cart.get(key, 0) + 1
     request.session["cart"] = cart
     messages.success(request, "Produit ajouté au panier.")
+    
+    next_url = request.GET.get('next')
+    if next_url:
+        return redirect(next_url)
     return redirect("cart")
 
 
@@ -295,6 +301,10 @@ def cart_remove(request, product_id: int):
     cart = _get_cart(request)
     cart.pop(str(product_id), None)
     request.session["cart"] = cart
+    
+    next_url = request.GET.get('next')
+    if next_url:
+        return redirect(next_url)
     return redirect("cart")
 
 
@@ -324,22 +334,53 @@ def cart_view(request):
     if redir:
         return redir
     cart = _get_cart(request)
+    token = _token(request)
+    user_wilaya = None
+    try:
+        user_me = api_client.auth_get("users/me/", token)
+        user_wilaya = user_me.get("wilaya")
+    except:
+        pass
+
     lines = []
     total = 0.0
-    token = _token(request)
+    suggestions = []
+
     for pid, qty in cart.items():
         try:
             p = api_client.api_get(f"products/{pid}/", token)
+            price = float(p.get("price", 0))
+            line_total = price * qty
+            total += line_total
+            
+            # Suggestion de proximité
+            if user_wilaya and p.get("pharmacy_wilaya") != user_wilaya:
+                # Chercher le même produit dans la wilaya de l'utilisateur
+                alt_params = {"search": p.get("name"), "pharmacy_wilaya": user_wilaya}
+                try:
+                    alts_data = api_client.api_get("products/", token, params=alt_params)
+                    alts_list = alts_data.get("results", alts_data) if isinstance(alts_data, dict) else alts_data
+                    if isinstance(alts_list, list):
+                        for better_alt in alts_list:
+                            if better_alt.get("id") != int(pid) and better_alt.get("name") == p.get("name"):
+                                suggestions.append({
+                                    "original_id": pid,
+                                    "original_name": p.get("name"),
+                                    "alt_id": better_alt.get("id"),
+                                    "pharmacy_name": better_alt.get("pharmacy_name"),
+                                    "wilaya": better_alt.get("pharmacy_wilaya")
+                                })
+                                break # On en suggère un seul par produit
+                except:
+                    pass
+
+            lines.append({"product": p, "quantity": qty, "line_total": line_total})
         except RequestException:
             continue
-        price = float(p.get("price", 0))
-        line_total = price * qty
-        total += line_total
-        lines.append({"product": p, "quantity": qty, "line_total": line_total})
     return render(
         request,
         "shop/cart.html",
-        {"lines": lines, "cart_total": total},
+        {"lines": lines, "cart_total": total, "suggestions": suggestions, "user_wilaya": user_wilaya},
     )
 
 
@@ -351,26 +392,82 @@ def checkout(request):
     if not cart:
         messages.warning(request, "Votre panier est vide.")
         return redirect("cart")
-    payload = {
-        "lines": [{"product_id": int(k), "quantity": int(v)} for k, v in cart.items()],
-        "phone": request.POST.get("phone", ""),
-        "city": request.POST.get("city", ""),
-        "commune": request.POST.get("commune", ""),
-        "detailed_address": request.POST.get("detailed_address", ""),
-        "postal_code": request.POST.get("postal_code", ""),
-        "delivery_method": "domicile"
-    }
-    try:
-        api_client.api_post("orders/", _token(request), payload)
-    except HTTPError as e:
-        messages.error(request, str(e))
+
+    token = _token(request)
+    
+    if request.method == "POST":
+        payload = {
+            "lines": [{"product_id": int(k), "quantity": int(v)} for k, v in cart.items()],
+            "phone": request.POST.get("phone", ""),
+            "email": request.POST.get("email", ""),
+            "city": request.POST.get("city", ""), # En réalité la Wilaya
+            "commune": request.POST.get("commune", ""),
+            "detailed_address": request.POST.get("detailed_address", ""),
+            "postal_code": request.POST.get("postal_code", ""),
+            "delivery_method": request.POST.get("delivery_method", "domicile")
+        }
+        try:
+            api_client.api_post("orders/", token, payload)
+            
+            # AUTO-SAVE: Mettre à jour la Wilaya de l'utilisateur pour les prochaines suggestions
+            new_wilaya = payload["city"]
+            if token and new_wilaya:
+                try:
+                    api_client.auth_patch("users/me/", token, {"wilaya": new_wilaya})
+                except: pass
+
+            request.session["cart"] = {}
+            messages.success(request, "Commande confirmée ! Votre localisation a été enregistrée pour vos prochaines visites.")
+            return redirect("orders")
+        except HTTPError as e:
+            msg = str(e)
+            if e.response is not None:
+                try:
+                    err_detail = e.response.json()
+                    msg = f"Erreur de validation : {err_detail}"
+                except: pass
+            messages.error(request, msg)
+        except RequestException:
+            messages.error(request, "Impossible de finaliser la commande.")
         return redirect("cart")
-    except RequestException:
-        messages.error(request, "Impossible de finaliser la commande.")
-        return redirect("cart")
-    request.session["cart"] = {}
-    messages.success(request, "Commande enregistrée. Une notification a été envoyée via la file RabbitMQ.")
-    return redirect("orders")
+
+    # Si GET : Préparer le récapitulatif
+    cart_items = []
+    total = 0.0
+    suggestions = []
+    for pid, qty in cart.items():
+        try:
+            p = api_client.api_get(f"products/{pid}/", token)
+            p_total = float(p.get("price", 0)) * qty
+            total += p_total
+            cart_items.append({"product": p, "quantity": qty, "total_price": p_total})
+            
+            # Suggestion de proximité identique au panier
+            if user_wilaya and p.get("pharmacy_wilaya") != user_wilaya:
+                alt_params = {"search": p.get("name"), "pharmacy_wilaya": user_wilaya}
+                try:
+                    alts_data = api_client.api_get("products/", token, params=alt_params)
+                    alts_list = alts_data.get("results", alts_data) if isinstance(alts_data, dict) else alts_data
+                    if isinstance(alts_list, list):
+                        for better_alt in alts_list:
+                            if better_alt.get("id") != int(pid) and better_alt.get("name") == p.get("name"):
+                                suggestions.append({
+                                    "original_id": pid,
+                                    "original_name": p.get("name"),
+                                    "alt_id": better_alt.get("id"),
+                                    "pharmacy_name": better_alt.get("pharmacy_name"),
+                                    "wilaya": better_alt.get("pharmacy_wilaya")
+                                })
+                                break
+                except: pass
+        except: continue
+
+    return render(request, "shop/checkout.html", {
+        "cart_items": cart_items,
+        "cart_total": total,
+        "original_suggestions": suggestions,
+        "user_wilaya": user_wilaya
+    })
 
 
 def orders(request):
@@ -445,13 +542,25 @@ def admin_product_create(request):
         categories = []
     
     if request.method == "POST":
+        import uuid
+        from django.utils.text import slugify
+        
+        name = request.POST.get("name", "").strip()
+        slug = request.POST.get("slug", "").strip()
+        sku = request.POST.get("sku", "").strip()
+        
+        if not slug and name:
+            slug = slugify(name)
+        if not sku:
+            sku = f"AUTO-{uuid.uuid4().hex[:8].upper()}"
+            
         payload = {
-            "name": request.POST.get("name", "").strip(),
-            "slug": request.POST.get("slug", "").strip().lower().replace(" ", "-"),
+            "name": name,
+            "slug": slug.lower().replace(" ", "-"),
             "summary": request.POST.get("summary", "").strip(),
             "price": float(request.POST.get("price", 0)),
             "stock": int(request.POST.get("stock", 0)),
-            "sku": request.POST.get("sku", "").strip().upper(),
+            "sku": sku.upper(),
             "category": int(request.POST.get("category", 0))
         }
         
@@ -639,6 +748,43 @@ def admin_users_list(request):
     return render(request, "shop/admin/users_list.html", {"users": users})
 
 
+def admin_user_toggle_active(request, user_id: int):
+    """Activer ou désactiver un utilisateur (Approbation globale)"""
+    redir = _require_admin(request)
+    if redir:
+        return redir
+    
+    try:
+        user_data = api_client.auth_get(f"users/{user_id}/", _token(request))
+        current_status = user_data.get("is_active", True)
+        new_status = not current_status
+        api_client.auth_patch(f"users/{user_id}/", _token(request), {"is_active": new_status})
+        
+        if new_status:
+            messages.success(request, "Le compte a été approuvé et activé avec succès.")
+        else:
+            messages.success(request, "Le compte a été désactivé / bloqué.")
+    except Exception as e:
+        messages.error(request, f"Erreur lors de la modification du statut: {str(e)}")
+        
+    return redirect("admin_users_list")
+
+
+def admin_user_delete(request, user_id: int):
+    """Supprimer définitivement un utilisateur de la base de données"""
+    redir = _require_admin(request)
+    if redir:
+        return redir
+    
+    try:
+        api_client.auth_delete(f"users/{user_id}/", _token(request))
+        messages.success(request, "Le profil a été supprimé avec succès.")
+    except Exception as e:
+        messages.error(request, f"Erreur lors de la suppression de l'utilisateur: {str(e)}")
+        
+    return redirect("admin_users_list")
+
+
 # ===== PROXY INTERACTION VIEWS =====
 
 @csrf_exempt
@@ -692,6 +838,68 @@ def product_unrate(request, product_id):
         return json_response(data)
     except RequestException as e:
         return json_response({"error": str(e)}, status=500)
+
+
+def profile_view(request):
+    """Gérer le profil de l'utilisateur (nom, wilaya)"""
+    redir = _require_auth(request)
+    if redir:
+        return redir
+    
+    token = _token(request)
+    if request.method == "POST":
+        payload = {
+            "first_name": request.POST.get("first_name", ""),
+            "last_name": request.POST.get("last_name", ""),
+            "wilaya": request.POST.get("wilaya", "")
+        }
+        if _get_role(request) == 'PHARMACY':
+            payload["pharmacy_name"] = request.POST.get("pharmacy_name", "")
+
+        try:
+            api_client.auth_patch("users/me/", token, payload)
+            messages.success(request, "Profil mis à jour avec succès.")
+        except RequestException as e:
+            messages.error(request, f"Erreur lors de la mise à jour: {str(e)}")
+
+    try:
+        user_data = api_client.auth_get("users/me/", token)
+    except RequestException:
+        messages.error(request, "Impossible de charger le profil.")
+        return redirect("home")
+
+    return render(request, "shop/profile.html", {"user_profile": user_data})
+
+
+def profile_view(request):
+    """Gérer le profil de l'utilisateur (nom, wilaya)"""
+    redir = _require_auth(request)
+    if redir:
+        return redir
+    
+    token = _token(request)
+    if request.method == "POST":
+        payload = {
+            "first_name": request.POST.get("first_name", ""),
+            "last_name": request.POST.get("last_name", ""),
+            "wilaya": request.POST.get("wilaya", "")
+        }
+        if _get_role(request) == 'PHARMACY':
+            payload["pharmacy_name"] = request.POST.get("pharmacy_name", "")
+
+        try:
+            api_client.auth_patch("users/me/", token, payload)
+            messages.success(request, "Profil mis à jour avec succès.")
+        except RequestException as e:
+            messages.error(request, f"Erreur lors de la mise à jour: {str(e)}")
+
+    try:
+        user_data = api_client.auth_get("users/me/", token)
+    except RequestException:
+        messages.error(request, "Impossible de charger le profil.")
+        return redirect("home")
+
+    return render(request, "shop/profile.html", {"user_profile": user_data})
 
 
 def json_response(data, status=200):

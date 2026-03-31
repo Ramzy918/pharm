@@ -18,8 +18,9 @@
       <thead style="background: rgba(255, 255, 255, 0.05);">
         <tr>
           <th style="padding: 1.25rem; text-align: left; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Nom / Email</th>
-          <th style="padding: 1.25rem; text-align: left; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Rôle</th>
+          <th style="padding: 1.25rem; text-align: left; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Statut & Rôle</th>
           <th style="padding: 1.25rem; text-align: left; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Date d'inscription</th>
+          <th style="padding: 1.25rem; text-align: right; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -30,17 +31,44 @@
             <div style="font-size: 0.85rem; color: var(--text-muted);">{{ user.email }}</div>
           </td>
           <td style="padding: 1.25rem;">
-            <span class="badge {% if user.role == 'ADMIN' %}badge-primary{% else %}badge-secondary{% endif %}" style="padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.75rem;">
-              {{ user.role }}
+            <span class="badge {% if user.is_active %}badge-success{% else %}badge-warning{% endif %}" style="padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.75rem;">
+              {% if user.is_active %}<i class="fas fa-check-circle"></i> Actif{% else %}<i class="fas fa-clock"></i> En attente{% endif %}
+            </span>
+            <span class="badge {% if user.role == 'ADMIN' %}badge-primary{% elif user.role == 'PHARMACY' %}badge-info{% else %}badge-secondary{% endif %}" style="padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.75rem; margin-left: 0.5rem; background: var(--border);">
+              <i class="fas fa-id-badge"></i> {{ user.role }}
             </span>
           </td>
           <td style="padding: 1.25rem; color: var(--text-muted);">
             {{ user.created_at|default:"-" }}
           </td>
+          <td style="padding: 1.25rem; text-align: right;">
+            {% if user.role != 'ADMIN' %}
+            <form method="post" action="{% url 'admin_user_toggle_active' user.id %}" style="display:inline;">
+              {% csrf_token %}
+              {% if user.is_active %}
+                <button type="submit" class="btn btn-outline" style="color: var(--danger); border-color: var(--danger); padding: 0.5rem 1rem;" onclick="return confirm('Voulez-vous suspendre ce compte ?');">
+                  <i class="fas fa-ban"></i> Suspendre
+                </button>
+              {% else %}
+                <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem;">
+                  <i class="fas fa-check"></i> Accepter la Pharmacie
+                </button>
+              {% endif %}
+            </form>
+            <form method="post" action="{% url 'admin_user_delete' user.id %}" style="display:inline; margin-left: 0.5rem;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline" style="color: var(--danger); border-color: var(--danger); padding: 0.5rem 1rem;" onclick="return confirm('ATTENTION : Voulez-vous vraiment SUPPRIMER ce compte de façon définitive ?');">
+                <i class="fas fa-trash"></i> Supprimer
+              </button>
+            </form>
+            {% else %}
+            <span style="color: var(--text-muted); font-size: 0.9rem;">Protégé</span>
+            {% endif %}
+          </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="3" style="padding: 3rem; text-align: center; color: var(--text-muted);">
+          <td colspan="4" style="padding: 3rem; text-align: center; color: var(--text-muted);">
             <i class="fas fa-info-circle" style="font-size: 2rem; display: block; margin-bottom: 1rem;"></i>
             Aucun utilisateur trouvé.
           </td>
