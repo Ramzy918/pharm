@@ -1,0 +1,28 @@
+# Django
+*.pyc
+__pycache__/
+db.sqlite3
+media/
+staticfiles/
+
+# Docker Local Data
+pg_auth/
+pg_catalog/
+.data/
+
+# Environment Variables (IMPORTANT: Don't push real .env)
+.env
+.env.local
+.env.*
+!.env.team
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+.venv/
+env/
+venv/
+*.log

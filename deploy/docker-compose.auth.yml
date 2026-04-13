@@ -1,0 +1,42 @@
+# Machine Camarade A : Service d'Authentification
+# Lancer avec: docker compose -f docker-compose.auth.yml up -d --build
+
+services:
+  postgres-auth:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: auth
+      POSTGRES_PASSWORD: auth
+      POSTGRES_DB: auth_db
+    volumes:
+      - pg_auth:/var/lib/postgresql/data
+    networks:
+      - pharm_net
+
+  auth-service:
+    build:
+      context: ..
+      dockerfile: services/auth-service/Dockerfile
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      DATABASE_URL: postgres://auth:auth@postgres-auth:5432/auth_db
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-change-me-auth}
+      JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:-shared-jwt-secret-change-in-prod}
+      CONSUL_HTTP_ADDR: http://${MASTER_IP:-localhost}:8500
+      SERVICE_NAME: auth-service
+      SERVICE_PORT: "8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres-auth
+    volumes:
+      - ../services/auth-service:/app
+    networks:
+      - pharm_net
+
+networks:
+  pharm_net:
+    driver: bridge
+
+volumes:
+  pg_auth:

@@ -1,0 +1,42 @@
+# Master Node : Infrastructure Commune (RabbitMQ, Consul, Traefik)
+# À lancer uniquement par le membre qui centralise (vous)
+# Commande : docker compose -f docker-compose.core.yml up -d
+
+services:
+  traefik:
+    image: traefik:v2.11
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+    ports:
+      - "80:80"       # Port standard pour le prof
+      - "8082:8080"   # Dashboard Traefik
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - pharm_net
+
+  consul:
+    image: hashicorp/consul:1.17
+    command: agent -dev -client=0.0.0.0 -ui
+    ports:
+      - "8500:8500"
+    networks:
+      - pharm_net
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    ports:
+      - "5672:5672"   # Port AMQP standard
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+    networks:
+      - pharm_net
+
+networks:
+  pharm_net:
+    driver: bridge

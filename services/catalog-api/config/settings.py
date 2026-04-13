@@ -26,10 +26,12 @@ INSTALLED_APPS = [
     "django_filters",
     "apps.core.apps.CoreConfig",
     "apps.catalog.apps.CatalogConfig",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -88,6 +90,8 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 24,
 }
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 AMQP_URL = env("AMQP_URL", default="amqp://guest:guest@rabbitmq:5672/")
 EGP_TO_DZD_RATE = Decimal(str(env("EGP_TO_DZD_RATE", default="2.70")))

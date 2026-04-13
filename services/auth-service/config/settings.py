@@ -22,10 +22,12 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "apps.core.apps.CoreConfig",
     "apps.users",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -90,3 +92,5 @@ SIMPLE_JWT = {
     "ALGORITHM": "HS256",
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
+
+CORS_ALLOW_ALL_ORIGINS = True

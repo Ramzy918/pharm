@@ -1,0 +1,22 @@
+# Machine Camarade C : Worker de Notifications
+# Lancer avec: docker compose -f docker-compose.worker.yml up -d --build
+
+services:
+  notification-worker:
+    build:
+      context: ..
+      dockerfile: services/notification-worker/Dockerfile
+    environment:
+      AMQP_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@${MASTER_IP:-localhost}:5672/
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+    volumes:
+      - ../services/notification-worker:/app
+    networks:
+      - pharm_net
+
+networks:
+  pharm_net:
+    driver: bridge
