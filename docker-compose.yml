@@ -71,9 +71,6 @@ services:
       CONSUL_HTTP_ADDR: http://consul:8500
       SERVICE_NAME: auth-service
       SERVICE_PORT: "8000"
-    depends_on:
-      - postgres-auth
-      - consul
     volumes:
       - ./services/auth-service:/app
     networks:
@@ -99,10 +96,6 @@ services:
       CONSUL_HTTP_ADDR: http://consul:8500
       SERVICE_NAME: catalog-api
       SERVICE_PORT: "8000"
-    depends_on:
-      - postgres-catalog
-      - rabbitmq
-      - consul
     volumes:
       - ./services/catalog-api:/app
     networks:
@@ -125,8 +118,6 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
     volumes:
       - ./services/notification-worker:/app
-    depends_on:
-      - rabbitmq
     networks:
       - pharm
 
@@ -146,10 +137,6 @@ services:
       CONSUL_HTTP_ADDR: http://consul:8500
       SERVICE_NAME: web-ui
       SERVICE_PORT: "8000"
-    depends_on:
-      - auth-service
-      - catalog-api
-      - consul
     volumes:
       - ./services/web-ui:/app
     networks:
