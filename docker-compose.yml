@@ -68,7 +68,7 @@ services:
       DATABASE_URL: postgres://auth:auth@postgres-auth:5432/auth_db
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-change-me-auth}
       JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:-shared-jwt-secret-change-in-prod}
-      CONSUL_HTTP_ADDR: http://consul:8500
+      CONSUL_HTTP_ADDR: http://${MASTER_IP:-consul}:8500
       SERVICE_NAME: auth-service
       SERVICE_PORT: "8000"
     volumes:
@@ -91,9 +91,9 @@ services:
       DATABASE_URL: postgres://catalog:catalog@postgres-catalog:5432/catalog_db
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY_CATALOG:-change-me-catalog}
       JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:-shared-jwt-secret-change-in-prod}
-      AMQP_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672/
+      AMQP_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@${MASTER_IP:-rabbitmq}:5672/
       EGP_TO_DZD_RATE: ${EGP_TO_DZD_RATE:-2.70}
-      CONSUL_HTTP_ADDR: http://consul:8500
+      CONSUL_HTTP_ADDR: http://${MASTER_IP:-consul}:8500
       SERVICE_NAME: catalog-api
       SERVICE_PORT: "8000"
     volumes:
@@ -111,7 +111,7 @@ services:
       context: .
       dockerfile: services/notification-worker/Dockerfile
     environment:
-      AMQP_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672/
+      AMQP_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@${MASTER_IP:-rabbitmq}:5672/
       SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
@@ -128,13 +128,13 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY_WEB:-change-me-web}
-      AUTH_INTERNAL_URL: http://auth-service:8000
-      API_INTERNAL_URL: http://catalog-api:8000
+      AUTH_INTERNAL_URL: http://${AUTH_IP:-auth-service}:8000
+      API_INTERNAL_URL: http://${CATALOG_IP:-catalog-api}:8000
       PUBLIC_AUTH_URL: http://auth.localhost:8081
       PUBLIC_API_URL: http://api.localhost:8081
       CURRENCY_CODE: ${CURRENCY_CODE:-DZD}
       CURRENCY_SYMBOL: ${CURRENCY_SYMBOL:-DA}
-      CONSUL_HTTP_ADDR: http://consul:8500
+      CONSUL_HTTP_ADDR: http://${MASTER_IP:-consul}:8500
       SERVICE_NAME: web-ui
       SERVICE_PORT: "8000"
     volumes:
