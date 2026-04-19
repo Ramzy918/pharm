@@ -1,4 +1,4 @@
-# Machine Ami 1 : Interface Web
+# Machine Interface Web
 # Lancer avec: docker compose -f docker-compose.web.yml up -d --build
 
 services:
@@ -18,8 +18,10 @@ services:
       CONSUL_HTTP_ADDR: http://${MASTER_IP:-localhost}:8500
       SERVICE_NAME: web-ui
       SERVICE_PORT: "8000"
-    ports:
-      - "80:8000" # Le professeur tape juste l'IP de l'Ami 1, sans port
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.pharm-web-prof.rule=Host(`172.20.10.2`) || Host(`localhost`) || PathPrefix(`/`)
+      - traefik.http.services.pharm-web.loadbalancer.server.port=8000
     volumes:
       - ../services/web-ui:/app
     networks:
