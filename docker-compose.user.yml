@@ -44,6 +44,7 @@ services:
       CONSUL_HTTP_ADDR: http://consul:8500
       SERVICE_NAME: auth-service
       SERVICE_PORT: "8000"
+      SERVICE_ADDRESS: ${MY_IP}
     volumes:
       - ./services/auth-service:/app
     ports:
@@ -69,6 +70,7 @@ services:
       CONSUL_HTTP_ADDR: http://consul:8500
       SERVICE_NAME: web-ui
       SERVICE_PORT: "8000"
+      SERVICE_ADDRESS: ${MY_IP}
     volumes:
       - ./services/web-ui:/app
     ports:
