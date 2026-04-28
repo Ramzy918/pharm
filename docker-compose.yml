@@ -73,6 +73,8 @@ services:
       SERVICE_PORT: "8000"
     volumes:
       - ./services/auth-service:/app
+    ports:
+      - "8001:8000"
     networks:
       - pharm
     labels:
@@ -98,6 +100,8 @@ services:
       SERVICE_PORT: "8000"
     volumes:
       - ./services/catalog-api:/app
+    ports:
+      - "8002:8000"
     networks:
       - pharm
     labels:
@@ -128,10 +132,10 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY_WEB:-change-me-web}
-      AUTH_INTERNAL_URL: http://${AUTH_IP:-auth-service}:8000
-      API_INTERNAL_URL: http://${CATALOG_IP:-catalog-api}:8000
-      PUBLIC_AUTH_URL: http://auth.localhost:8081
-      PUBLIC_API_URL: http://api.localhost:8081
+      AUTH_INTERNAL_URL: http://auth-service:8000
+      API_INTERNAL_URL: http://catalog-api:8000
+      PUBLIC_AUTH_URL: http://172.20.10.3:8001
+      PUBLIC_API_URL: http://172.20.10.3:8002
       CURRENCY_CODE: ${CURRENCY_CODE:-DZD}
       CURRENCY_SYMBOL: ${CURRENCY_SYMBOL:-DA}
       CONSUL_HTTP_ADDR: http://${MASTER_IP:-consul}:8500
@@ -139,11 +143,13 @@ services:
       SERVICE_PORT: "8000"
     volumes:
       - ./services/web-ui:/app
+    ports:
+      - "8000:8000"
     networks:
       - pharm
     labels:
       - traefik.enable=true
-      - traefik.http.routers.pharm-web.rule=Host(`172.20.10.4`) || Host(`localhost`) || PathPrefix(`/`)
+      - traefik.http.routers.pharm-web.rule=Host(`172.20.10.3`) || Host(`localhost`) || PathPrefix(`/`)
       - traefik.http.routers.pharm-web.entrypoints=web
       - traefik.http.services.pharm-web.loadbalancer.server.port=8000
 
