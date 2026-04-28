@@ -49,6 +49,7 @@ services:
       - ./services/auth-service:/app
     ports:
       - "8001:8000"
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120
     networks:
       - pharm
 
@@ -59,8 +60,8 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY_WEB:-change-me-web}
-      # Connexion à l'auth (local à cette machine)
-      AUTH_INTERNAL_URL: http://auth-service:8000
+      # Connexion à l'auth (local ou distant via IP)
+      AUTH_INTERNAL_URL: http://${AUTH_IP}:8001
       # Connexion au catalogue (sur la machine du partenaire)
       API_INTERNAL_URL: http://${CATALOG_IP}:8002
       PUBLIC_AUTH_URL: http://${MY_IP}:8001
@@ -75,6 +76,7 @@ services:
       - ./services/web-ui:/app
     ports:
       - "8000:8000"
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120
     networks:
       - pharm
 
