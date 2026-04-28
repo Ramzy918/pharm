@@ -78,3 +78,6 @@ PUBLIC_API_URL = env("PUBLIC_API_URL", default="http://api.localhost")
 # Exemples : Algérie DZD → DA ou DZD | Égypte EGP → ج.م ou E£ ou EGP
 CURRENCY_CODE = env("CURRENCY_CODE", default="DZD")
 CURRENCY_SYMBOL = env("CURRENCY_SYMBOL", default="DA")
+
+# Désactiver COOP car on utilise des adresses IP en local (non-HTTPS)
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None
