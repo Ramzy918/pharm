@@ -1,0 +1,84 @@
+# MarketPharm - Configuration pour la machine de RAMZY (172.20.10.3)
+# Cette machine héberge l'infrastructure (Consul, RabbitMQ) et l'Auth + Web UI
+
+services:
+  consul:
+    image: hashicorp/consul:1.17
+    command: agent -dev -client=0.0.0.0 -ui
+    ports:
+      - "8500:8500"
+    networks:
+      - pharm
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+    networks:
+      - pharm
+
+  postgres-auth:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: auth
+      POSTGRES_PASSWORD: auth
+      POSTGRES_DB: auth_db
+    volumes:
+      - pg_auth:/var/lib/postgresql/data
+    networks:
+      - pharm
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      DATABASE_URL: postgres://auth:auth@postgres-auth:5432/auth_db
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-change-me-auth}
+      JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:-shared-jwt-secret-change-in-prod}
+      CONSUL_HTTP_ADDR: http://consul:8500
+      SERVICE_NAME: auth-service
+      SERVICE_PORT: "8000"
+    volumes:
+      - ./services/auth-service:/app
+    ports:
+      - "8001:8000"
+    networks:
+      - pharm
+
+  web-ui:
+    build:
+      context: .
+      dockerfile: services/web-ui/Dockerfile
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY_WEB:-change-me-web}
+      # Connexion à l'auth (local à cette machine)
+      AUTH_INTERNAL_URL: http://auth-service:8000
+      # Connexion au catalogue (sur la machine du partenaire)
+      API_INTERNAL_URL: http://${CATALOG_IP}:8002
+      PUBLIC_AUTH_URL: http://${MY_IP}:8001
+      PUBLIC_API_URL: http://${CATALOG_IP}:8002
+      CURRENCY_CODE: ${CURRENCY_CODE:-DZD}
+      CURRENCY_SYMBOL: ${CURRENCY_SYMBOL:-DA}
+      CONSUL_HTTP_ADDR: http://consul:8500
+      SERVICE_NAME: web-ui
+      SERVICE_PORT: "8000"
+    volumes:
+      - ./services/web-ui:/app
+    ports:
+      - "8000:8000"
+    networks:
+      - pharm
+
+networks:
+  pharm:
+    driver: bridge
+
+volumes:
+  pg_auth:

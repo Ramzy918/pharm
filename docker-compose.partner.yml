@@ -1,0 +1,59 @@
+# MarketPharm - Configuration pour la machine du PARTENAIRE (172.20.10.10)
+# Cette machine héberge le catalogue et le worker
+
+services:
+  postgres-catalog:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: catalog
+      POSTGRES_PASSWORD: catalog
+      POSTGRES_DB: catalog_db
+    volumes:
+      - pg_catalog:/var/lib/postgresql/data
+    networks:
+      - pharm
+
+  catalog-api:
+    build:
+      context: .
+      dockerfile: services/catalog-api/Dockerfile
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      DATABASE_URL: postgres://catalog:catalog@postgres-catalog:5432/catalog_db
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY_CATALOG:-change-me-catalog}
+      JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:-shared-jwt-secret-change-in-prod}
+      # Connexion à l'infrastructure (sur la machine de Ramzy)
+      AMQP_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@${MASTER_IP}:5672/
+      CONSUL_HTTP_ADDR: http://${MASTER_IP}:8500
+      EGP_TO_DZD_RATE: ${EGP_TO_DZD_RATE:-2.70}
+      SERVICE_NAME: catalog-api
+      SERVICE_PORT: "8000"
+    volumes:
+      - ./services/catalog-api:/app
+    ports:
+      - "8002:8000"
+    networks:
+      - pharm
+
+  notification-worker:
+    build:
+      context: .
+      dockerfile: services/notification-worker/Dockerfile
+    environment:
+      # Connexion à RabbitMQ (sur la machine de Ramzy)
+      AMQP_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@${MASTER_IP}:5672/
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+    volumes:
+      - ./services/notification-worker:/app
+    networks:
+      - pharm
+
+networks:
+  pharm:
+    driver: bridge
+
+volumes:
+  pg_catalog:
